@@ -12,7 +12,7 @@ public class RegisterEndpoint(RegisterHandler handler, IValidator<RegisterComman
     private readonly IValidator<RegisterCommand> _validator = validator;
 
     [HttpPost("register")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(RegisterResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ValidationProblemDetails))]
     public async Task<IActionResult> Register([FromBody] RegisterCommand command)
     {
@@ -57,15 +57,15 @@ public class RegisterEndpoint(RegisterHandler handler, IValidator<RegisterComman
             return ValidationProblem(ModelState);
         }
 
-        return Created(string.Empty, new
+        return Created(string.Empty, new RegisterResponse
         {
-            userId = result.UserId,
-            username = result.Username,
-            email = result.Email,
-            role = result.Role,
-            firstName = result.FirstName,
-            lastName = result.LastName,
-            employeeId = result.EmployeeId
+            UserId = result.UserId ?? string.Empty,
+            Username = result.Username ?? string.Empty,
+            Email = result.Email ?? string.Empty,
+            Role = result.Role ?? string.Empty,
+            FirstName = result.FirstName ?? string.Empty,
+            LastName = result.LastName ?? string.Empty,
+            EmployeeId = result.EmployeeId ?? string.Empty
         });
     }
 }

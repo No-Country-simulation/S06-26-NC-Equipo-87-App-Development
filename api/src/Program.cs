@@ -1,4 +1,4 @@
-using api;
+using api.Common.Extensions;
 using api.Data;
 
 using Microsoft.AspNetCore.HttpOverrides;
@@ -31,6 +31,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

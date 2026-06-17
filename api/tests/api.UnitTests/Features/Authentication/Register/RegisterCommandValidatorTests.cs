@@ -14,7 +14,7 @@ public class RegisterCommandValidatorTests
     [Fact]
     public void Validate_ValidCommand_ReturnsTrue()
     {
-        var command = new RegisterCommand
+        RegisterCommand command = new RegisterCommand
         {
             FirstName = "John",
             LastName = "Doe",
@@ -31,7 +31,7 @@ public class RegisterCommandValidatorTests
     [Fact]
     public void Validate_FirstNameTooLong_ReturnsFalse()
     {
-        var command = new RegisterCommand
+        RegisterCommand command = new RegisterCommand
         {
             FirstName = new string('a', 51),
             LastName = "Doe",
@@ -49,7 +49,7 @@ public class RegisterCommandValidatorTests
     [Fact]
     public void Validate_LastNameTooLong_ReturnsFalse()
     {
-        var command = new RegisterCommand
+        RegisterCommand command = new RegisterCommand
         {
             FirstName = "John",
             LastName = new string('b', 51),
@@ -67,7 +67,7 @@ public class RegisterCommandValidatorTests
     [Fact]
     public void Validate_FirstNameInvalidCharacters_ReturnsFalse()
     {
-        var command = new RegisterCommand
+        RegisterCommand command = new RegisterCommand
         {
             FirstName = "John123",
             LastName = "Doe",
@@ -85,7 +85,7 @@ public class RegisterCommandValidatorTests
     [Fact]
     public void Validate_LastNameInvalidCharacters_ReturnsFalse()
     {
-        var command = new RegisterCommand
+        RegisterCommand command = new RegisterCommand
         {
             FirstName = "John",
             LastName = "Doe#",
@@ -103,7 +103,7 @@ public class RegisterCommandValidatorTests
     [Fact]
     public void Validate_EmailTooLong_ReturnsFalse()
     {
-        var command = new RegisterCommand
+        RegisterCommand command = new RegisterCommand
         {
             FirstName = "John",
             LastName = "Doe",
@@ -121,7 +121,7 @@ public class RegisterCommandValidatorTests
     [Fact]
     public void Validate_InvalidRole_ReturnsFalse()
     {
-        var command = new RegisterCommand
+        RegisterCommand command = new RegisterCommand
         {
             FirstName = "John",
             LastName = "Doe",
@@ -145,7 +145,7 @@ public class RegisterCommandValidatorTests
     [InlineData("P1!")]
     public void Validate_PasswordRules_Evaluated(string password)
     {
-        var command = new RegisterCommand
+        RegisterCommand command = new RegisterCommand
         {
             FirstName = "John",
             LastName = "Doe",

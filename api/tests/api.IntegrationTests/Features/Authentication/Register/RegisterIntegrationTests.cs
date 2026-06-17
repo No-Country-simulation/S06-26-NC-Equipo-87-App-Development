@@ -16,7 +16,7 @@ public class RegisterIntegrationTests(IntegrationTestFactory factory) : IClassFi
     public async Task Register_ValidPayload_ReturnsCreatedAndUserData()
     {
         // Arrange
-        var command = new RegisterCommand
+        RegisterCommand command = new RegisterCommand
         {
             FirstName = "John",
             LastName = "Doe",
@@ -55,7 +55,7 @@ public class RegisterIntegrationTests(IntegrationTestFactory factory) : IClassFi
         string firstName, string lastName, string password, string email, string role, string expectedErrorKey)
     {
         // Arrange
-        var command = new RegisterCommand
+        RegisterCommand command = new RegisterCommand
         {
             FirstName = firstName,
             LastName = lastName,
@@ -80,7 +80,7 @@ public class RegisterIntegrationTests(IntegrationTestFactory factory) : IClassFi
     public async Task Register_NameCollisionAndMultipleUsers_AutogeneratesUniqueUsernamesAndSequentialEmployeeIds()
     {
         // Arrange
-        var command1 = new RegisterCommand
+        RegisterCommand command1 = new RegisterCommand
         {
             FirstName = "Jane",
             LastName = "Doe",
@@ -89,7 +89,7 @@ public class RegisterIntegrationTests(IntegrationTestFactory factory) : IClassFi
             Role = "Operator"
         };
 
-        var command2 = new RegisterCommand
+        RegisterCommand command2 = new RegisterCommand
         {
             FirstName = "Jane",
             LastName = "Doe",

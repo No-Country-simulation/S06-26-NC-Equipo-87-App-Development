@@ -1,5 +1,6 @@
 using api.Data;
 using api.Features.Authentication.Common;
+using api.Features.Authentication.Login;
 using api.Features.Authentication.Register;
 
 using FluentValidation;
@@ -7,7 +8,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace api;
+namespace api.Common.Extensions;
 
 public static class DependencyInjectionExtensions
 {
@@ -17,6 +18,7 @@ public static class DependencyInjectionExtensions
             .AddApiInfrastructure()
             .AddDatabaseServices(configuration)
             .AddIdentityServices()
+            .AddAuthenticationServices(configuration)
             .AddFeatureServices();
 
         return services;
@@ -25,7 +27,7 @@ public static class DependencyInjectionExtensions
     private static IServiceCollection AddApiInfrastructure(this IServiceCollection services)
     {
         services.AddControllers();
-        services.AddOpenApi();
+        services.AddCustomOpenApi();
         services.AddHealthChecks();
         return services;
     }
@@ -55,6 +57,7 @@ public static class DependencyInjectionExtensions
     private static IServiceCollection AddFeatureServices(this IServiceCollection services)
     {
         services.AddScoped<RegisterHandler>();
+        services.AddScoped<LoginHandler>();
         services.AddValidatorsFromAssemblyContaining<RegisterCommandValidator>();
         return services;
     }
