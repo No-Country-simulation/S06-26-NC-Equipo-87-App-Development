@@ -1,0 +1,71 @@
+using FluentValidation;
+
+using Microsoft.AspNetCore.Mvc;
+
+namespace api.Features.Authentication.Register;
+
+[ApiController]
+[Route("api/authentication")]
+public class RegisterEndpoint(RegisterHandler handler, IValidator<RegisterCommand> validator) : ControllerBase
+{
+    private readonly RegisterHandler _handler = handler;
+    private readonly IValidator<RegisterCommand> _validator = validator;
+
+    [HttpPost("register")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ValidationProblemDetails))]
+    public async Task<IActionResult> Register([FromBody] RegisterCommand command)
+    {
+        var validationResult = await _validator.ValidateAsync(command);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var result = await _handler.HandleAsync(command);
+        if (!result.Succeeded)
+        {
+            if (!string.IsNullOrEmpty(result.InvalidRoleError))
+            {
+                ModelState.AddModelError("Role", result.InvalidRoleError);
+                return ValidationProblem(ModelState);
+            }
+
+            foreach (var error in result.Errors)
+            {
+                string key = string.Empty;
+                if (error.Code.Contains("Password"))
+                {
+                    key = "Password";
+                }
+                else if (error.Code.Contains("Email"))
+                {
+                    key = "Email";
+                }
+                else if (error.Code.Contains("UserName") || error.Code.Contains("User"))
+                {
+                    key = "Username";
+                }
+
+                ModelState.AddModelError(key, error.Description);
+            }
+
+            return ValidationProblem(ModelState);
+        }
+
+        return Created(string.Empty, new
+        {
+            userId = result.UserId,
+            username = result.Username,
+            email = result.Email,
+            role = result.Role,
+            firstName = result.FirstName,
+            lastName = result.LastName,
+            employeeId = result.EmployeeId
+        });
+    }
+}

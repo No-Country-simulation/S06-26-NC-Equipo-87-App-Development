@@ -1,14 +1,13 @@
+using api;
+using api.Data;
+
 using Microsoft.AspNetCore.HttpOverrides;
+
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
-builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
-builder.Services.AddHealthChecks();
+builder.Services.AddApiServices(builder.Configuration);
 
 var app = builder.Build();
 
@@ -19,7 +18,6 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
     KnownProxies = { }
 });
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/error");
@@ -38,6 +36,8 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHealthChecks("/health");
 app.Map("/error", () => Results.Problem());
+
+await DatabaseInitializer.InitializeAsync(app.Services);
 
 app.Run();
 

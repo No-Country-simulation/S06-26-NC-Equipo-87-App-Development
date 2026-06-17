@@ -1,35 +1,26 @@
-using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
-using System.Threading.Tasks;
-using Xunit;
 
-namespace api.IntegrationTests
+namespace api.IntegrationTests;
+
+public class HealthCheckTests(IntegrationTestFactory factory) : IClassFixture<IntegrationTestFactory>
 {
-    public class HealthCheckTests : IClassFixture<WebApplicationFactory<Program>>
+    private readonly IntegrationTestFactory _factory = factory;
+
+    [Fact]
+    public async Task Get_Health_ReturnsOkAndHealthy()
     {
-        private readonly WebApplicationFactory<Program> _factory;
+        // Arrange
+        var client = _factory.CreateClient();
+        client.Timeout = TimeSpan.FromSeconds(5);
 
-        public HealthCheckTests(WebApplicationFactory<Program> factory)
-        {
-            _factory = factory;
-        }
+        // Act
+        var response = await client.GetAsync("/health");
 
-        [Fact]
-        public async Task Get_Health_ReturnsOkAndHealthy()
-        {
-            // Arrange
-            var client = _factory.CreateClient();
-            client.Timeout = TimeSpan.FromSeconds(5);
-
-            // Act
-            var response = await client.GetAsync("/health");
-
-            // Assert
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.NotNull(response.Content.Headers.ContentType);
-            Assert.Contains("text/plain", response.Content.Headers.ContentType.ToString());
-            var content = await response.Content.ReadAsStringAsync();
-            Assert.Equal("Healthy", content);
-        }
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(response.Content.Headers.ContentType);
+        Assert.Contains("text/plain", response.Content.Headers.ContentType.ToString());
+        string content = await response.Content.ReadAsStringAsync();
+        Assert.Equal("Healthy", content);
     }
 }
