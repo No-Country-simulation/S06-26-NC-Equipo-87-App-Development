@@ -6,6 +6,7 @@ namespace api.Features.Authentication.Register;
 
 [ApiController]
 [Route("api/authentication")]
+[Tags("Authentication")]
 public class RegisterEndpoint(RegisterHandler handler, IValidator<RegisterCommand> validator) : ControllerBase
 {
     private readonly RegisterHandler _handler = handler;
@@ -65,7 +66,10 @@ public class RegisterEndpoint(RegisterHandler handler, IValidator<RegisterComman
             Role = result.Role ?? string.Empty,
             FirstName = result.FirstName ?? string.Empty,
             LastName = result.LastName ?? string.Empty,
-            EmployeeId = result.EmployeeId ?? string.Empty
+            EmployeeId = result.EmployeeId ?? string.Empty,
+            Pin = result.Pin ?? string.Empty,
+            AreaId = result.AreaId,
+            ShiftId = result.ShiftId
         });
     }
 }

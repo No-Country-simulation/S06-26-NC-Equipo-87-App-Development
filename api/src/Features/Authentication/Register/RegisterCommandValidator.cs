@@ -1,10 +1,14 @@
+using api.Data;
+
 using FluentValidation;
+
+using Microsoft.EntityFrameworkCore;
 
 namespace api.Features.Authentication.Register;
 
 public class RegisterCommandValidator : AbstractValidator<RegisterCommand>
 {
-    public RegisterCommandValidator()
+    public RegisterCommandValidator(AppDbContext dbContext)
     {
         RuleFor(x => x.FirstName)
             .NotEmpty().WithMessage("First name is required.")
@@ -33,6 +37,14 @@ public class RegisterCommandValidator : AbstractValidator<RegisterCommand>
             .NotEmpty().WithMessage("Role is required.")
             .Must(role => role == "Operator" || role == "Supervisor" || role == "Technician" || role == "Plant Manager")
             .WithMessage("Role must be a valid option (Operator, Supervisor, Technician, Plant Manager).");
+
+        RuleFor(x => x.AreaId)
+            .MustAsync(async (id, cancellation) => !id.HasValue || await dbContext.Areas.AnyAsync(a => a.Id == id.Value && a.Status == "Active", cancellation))
+            .WithMessage("Area must exist and be active.");
+
+        RuleFor(x => x.ShiftId)
+            .MustAsync(async (id, cancellation) => !id.HasValue || await dbContext.Shifts.AnyAsync(s => s.Id == id.Value && s.Status == "Active", cancellation))
+            .WithMessage("Shift must exist and be active.");
     }
 
     private bool HasUppercase(string password)

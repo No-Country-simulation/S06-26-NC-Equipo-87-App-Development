@@ -8,6 +8,8 @@
     "text-secondary": "#5F5E5A",
     "text-tertiary": "#888780",
     "text-on-dark": "#E8E6DF",
+    "text-muted": "#6B6965",
+    "border-dark": "#3D4147",
     "status-open": "#E24B4A",
     "status-open-badge-text": "#791F1F",
     "status-in-progress": "#BA7517",
@@ -109,6 +111,21 @@
       "borderStyle": "solid",
       "borderColor": "#F1EFE8",
       "padding": "16px"
+    },
+    "button-red": {
+      "background": "#FDF0F0",
+      "borderColor": "#A94442",
+      "textColor": "#721C24"
+    },
+    "button-yellow": {
+      "background": "#FDF5E6",
+      "borderColor": "#A06A38",
+      "textColor": "#6E4720"
+    },
+    "button-green": {
+      "background": "#EEF7EA",
+      "borderColor": "#4E803C",
+      "textColor": "#2B5115"
     }
   }
 }

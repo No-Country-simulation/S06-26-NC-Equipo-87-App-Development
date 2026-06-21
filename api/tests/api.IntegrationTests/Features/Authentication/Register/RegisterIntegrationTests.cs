@@ -22,7 +22,9 @@ public class RegisterIntegrationTests(IntegrationTestFactory factory) : IClassFi
             LastName = "Doe",
             Password = "OperatorPassword123!",
             Email = "operator@opscore.com",
-            Role = "Operator"
+            Role = "Operator",
+            AreaId = 1,
+            ShiftId = 1
         };
 
         // Act
@@ -41,6 +43,8 @@ public class RegisterIntegrationTests(IntegrationTestFactory factory) : IClassFi
         Assert.Equal(command.FirstName, result.FirstName);
         Assert.Equal(command.LastName, result.LastName);
         Assert.Equal(command.Role, result.Role);
+        Assert.Equal(command.AreaId, result.AreaId);
+        Assert.Equal(command.ShiftId, result.ShiftId);
     }
 
     [Theory]
@@ -118,6 +122,105 @@ public class RegisterIntegrationTests(IntegrationTestFactory factory) : IClassFi
         Assert.Equal(id1 + 1, id2);
     }
 
+    [Fact]
+    public async Task Register_InvalidAreaId_ReturnsBadRequestWithValidationMessage()
+    {
+        // Arrange
+        RegisterCommand command = new RegisterCommand
+        {
+            FirstName = "John",
+            LastName = "Doe",
+            Password = "OperatorPassword123!",
+            Email = "invalidarea@opscore.com",
+            Role = "Operator",
+            AreaId = 999
+        };
+
+        // Act
+        HttpResponseMessage response = await _client.PostAsJsonAsync("/api/authentication/register", command);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        ValidationProblemDetails? problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+        Assert.NotNull(problem);
+        Assert.Contains("AreaId", problem.Errors.Keys);
+        Assert.Equal("Area must exist and be active.", problem.Errors["AreaId"][0]);
+    }
+
+    [Fact]
+    public async Task Register_InvalidShiftId_ReturnsBadRequestWithValidationMessage()
+    {
+        // Arrange
+        RegisterCommand command = new RegisterCommand
+        {
+            FirstName = "John",
+            LastName = "Doe",
+            Password = "OperatorPassword123!",
+            Email = "invalidshift@opscore.com",
+            Role = "Operator",
+            ShiftId = 999
+        };
+
+        // Act
+        HttpResponseMessage response = await _client.PostAsJsonAsync("/api/authentication/register", command);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        ValidationProblemDetails? problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+        Assert.NotNull(problem);
+        Assert.Contains("ShiftId", problem.Errors.Keys);
+        Assert.Equal("Shift must exist and be active.", problem.Errors["ShiftId"][0]);
+    }
+
+    [Fact]
+    public async Task Login_UserWithAreaAndShift_TokenContainsClaims()
+    {
+        // Arrange
+        RegisterCommand registerCommand = new RegisterCommand
+        {
+            FirstName = "Test",
+            LastName = "User",
+            Password = "UserPassword1!",
+            Email = "testuser@opscore.com",
+            Role = "Operator",
+            AreaId = 1,
+            ShiftId = 1
+        };
+        HttpResponseMessage registerResponse = await _client.PostAsJsonAsync("/api/authentication/register", registerCommand);
+        Assert.Equal(HttpStatusCode.Created, registerResponse.StatusCode);
+
+        object loginCommand = new
+        {
+            Identifier = "testuser@opscore.com",
+            Password = "UserPassword1!"
+        };
+
+        // Act
+        HttpResponseMessage loginResponse = await _client.PostAsJsonAsync("/api/authentication/login", loginCommand);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
+        LoginResponse? loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+        Assert.NotNull(loginResult);
+
+        System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+        System.IdentityModel.Tokens.Jwt.JwtSecurityToken jwtToken = tokenHandler.ReadJwtToken(loginResult.Token);
+        string? areaClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "areaId")?.Value;
+        string? areaNameClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "areaName")?.Value;
+        string? shiftClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "shiftId")?.Value;
+        string? shiftNameClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "shiftName")?.Value;
+
+        Assert.Equal("1", areaClaim);
+        Assert.Equal("Zona Norte", areaNameClaim);
+        Assert.Equal("1", shiftClaim);
+        Assert.Equal("Turno mañana", shiftNameClaim);
+    }
+
+    private class LoginResponse
+    {
+        public string Token { get; set; } = string.Empty;
+    }
+
     private class RegisterResponse
     {
         public string UserId { get; set; } = string.Empty;
@@ -127,5 +230,7 @@ public class RegisterIntegrationTests(IntegrationTestFactory factory) : IClassFi
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public string EmployeeId { get; set; } = string.Empty;
+        public int? AreaId { get; set; }
+        public int? ShiftId { get; set; }
     }
 }

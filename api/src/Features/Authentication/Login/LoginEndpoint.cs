@@ -6,6 +6,7 @@ namespace api.Features.Authentication.Login;
 
 [ApiController]
 [Route("api/authentication")]
+[Tags("Authentication")]
 public class LoginEndpoint(LoginHandler handler, IValidator<LoginCommand> validator) : ControllerBase
 {
     private readonly LoginHandler _handler = handler;

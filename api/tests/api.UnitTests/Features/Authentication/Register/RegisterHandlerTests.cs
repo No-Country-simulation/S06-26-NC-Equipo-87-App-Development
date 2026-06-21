@@ -14,6 +14,7 @@ public class RegisterHandlerTests
 {
     private readonly Mock<UserManager<User>> _userManagerMock;
     private readonly Mock<RoleManager<IdentityRole>> _roleManagerMock;
+    private readonly Mock<IPasswordHasher<User>> _passwordHasherMock;
     private readonly RegisterHandler _handler;
     private readonly List<User> _usersInDb;
 
@@ -27,7 +28,11 @@ public class RegisterHandlerTests
         _roleManagerMock = new Mock<RoleManager<IdentityRole>>(
             roleStoreMock.Object, null!, null!, null!, null!);
 
-        _handler = new RegisterHandler(_userManagerMock.Object, _roleManagerMock.Object);
+        _passwordHasherMock = new Mock<IPasswordHasher<User>>();
+        _passwordHasherMock.Setup(h => h.HashPassword(It.IsAny<User>(), It.IsAny<string>()))
+            .Returns("hashed_pin_value");
+
+        _handler = new RegisterHandler(_userManagerMock.Object, _roleManagerMock.Object, _passwordHasherMock.Object);
         _usersInDb = new List<User>();
 
         TestAsyncEnumerable<User> mockUsers = new TestAsyncEnumerable<User>(_usersInDb);
@@ -162,6 +167,9 @@ public class RegisterHandlerTests
         Assert.Equal("John", result.FirstName);
         Assert.Equal("Doe", result.LastName);
         Assert.Equal("Operator", result.Role);
+        Assert.NotNull(result.Pin);
+        Assert.Equal(4, result.Pin.Length);
+        Assert.True(result.Pin.All(char.IsDigit));
         _userManagerMock.Verify(u => u.CreateAsync(It.IsAny<User>(), command.Password), Times.Once);
         _userManagerMock.Verify(u => u.AddToRoleAsync(It.IsAny<User>(), command.Role), Times.Once);
     }
@@ -204,6 +212,48 @@ public class RegisterHandlerTests
         Assert.True(result.Succeeded);
         Assert.Equal("johdoe1", result.Username);
         Assert.Equal("0002", result.EmployeeId);
+        Assert.NotNull(result.Pin);
+        Assert.Equal(4, result.Pin.Length);
+        Assert.True(result.Pin.All(char.IsDigit));
+    }
+
+    [Theory]
+    [InlineData("john", "doe", "John", "Doe")]
+    [InlineData("mary jane", "smith-o'brien", "Mary Jane", "Smith-O'brien")]
+    [InlineData("JOHN", "DOE", "John", "Doe")]
+    [InlineData("st. john", "o'hara", "St. John", "O'hara")]
+    [InlineData("  john  ", "  doe  ", "John", "Doe")]
+    [InlineData("álex", "núñez", "Álex", "Núñez")]
+    [InlineData("", "", "", "")]
+    public async Task HandleAsync_LowercaseOrMixedcaseNames_CapitalizesFirstLetters(
+        string inputFirstName, string inputLastName, string expectedFirstName, string expectedLastName)
+    {
+        // Arrange
+        RegisterCommand command = new RegisterCommand
+        {
+            FirstName = inputFirstName,
+            LastName = inputLastName,
+            Password = "Password123!",
+            Email = "another@example.com",
+            Role = "Operator"
+        };
+
+        _roleManagerMock.Setup(r => r.RoleExistsAsync(command.Role))
+            .ReturnsAsync(true);
+
+        _userManagerMock.Setup(u => u.CreateAsync(It.IsAny<User>(), command.Password))
+            .ReturnsAsync(IdentityResult.Success);
+
+        _userManagerMock.Setup(u => u.AddToRoleAsync(It.IsAny<User>(), command.Role))
+            .ReturnsAsync(IdentityResult.Success);
+
+        // Act
+        var result = await _handler.HandleAsync(command);
+
+        // Assert
+        Assert.True(result.Succeeded);
+        Assert.Equal(expectedFirstName, result.FirstName);
+        Assert.Equal(expectedLastName, result.LastName);
     }
 }
 

@@ -9,4 +9,7 @@ public class RegisterResponse
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string EmployeeId { get; set; } = string.Empty;
+    public string Pin { get; set; } = string.Empty;
+    public int? AreaId { get; set; }
+    public int? ShiftId { get; set; }
 }

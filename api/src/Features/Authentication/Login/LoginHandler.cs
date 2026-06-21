@@ -17,10 +17,11 @@ public class LoginResult
     public string? ErrorMessage { get; set; }
 }
 
-public class LoginHandler(UserManager<User> userManager, IConfiguration configuration)
+public class LoginHandler(UserManager<User> userManager, IConfiguration configuration, IPasswordHasher<User> passwordHasher)
 {
     private readonly UserManager<User> _userManager = userManager;
     private readonly IConfiguration _configuration = configuration;
+    private readonly IPasswordHasher<User> _passwordHasher = passwordHasher;
 
     public async Task<LoginResult> HandleAsync(LoginCommand command)
     {
@@ -33,7 +34,11 @@ public class LoginHandler(UserManager<User> userManager, IConfiguration configur
         bool isPasswordValid = await _userManager.CheckPasswordAsync(user, command.Password);
         if (!isPasswordValid)
         {
-            return new LoginResult { Succeeded = false, ErrorMessage = "Invalid credentials." };
+            bool isPinValid = VerifyPin(user, command.Password);
+            if (!isPinValid)
+            {
+                return new LoginResult { Succeeded = false, ErrorMessage = "Invalid credentials." };
+            }
         }
 
         IList<string> roles = await _userManager.GetRolesAsync(user);
@@ -45,8 +50,19 @@ public class LoginHandler(UserManager<User> userManager, IConfiguration configur
     private async Task<User?> FindUserAsync(string identifier)
     {
         return identifier.Contains('@')
-            ? await _userManager.FindByEmailAsync(identifier)
-            : await _userManager.Users.FirstOrDefaultAsync(u => u.EmployeeId == identifier);
+            ? await _userManager.Users.Include(u => u.Area).Include(u => u.Shift).FirstOrDefaultAsync(u => u.Email == identifier)
+            : await _userManager.Users.Include(u => u.Area).Include(u => u.Shift).FirstOrDefaultAsync(u => u.EmployeeId == identifier);
+    }
+
+    private bool VerifyPin(User user, string password)
+    {
+        if (string.IsNullOrEmpty(user.PinHash) || password.Length != 4 || !password.All(char.IsDigit))
+        {
+            return false;
+        }
+
+        var verificationResult = _passwordHasher.VerifyHashedPassword(user, user.PinHash, password);
+        return verificationResult == PasswordVerificationResult.Success;
     }
 
     private string GenerateJwtToken(User user, IList<string> roles)
@@ -66,12 +82,34 @@ public class LoginHandler(UserManager<User> userManager, IConfiguration configur
             new(JwtRegisteredClaimNames.UniqueName, user.UserName ?? string.Empty),
             new(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
             new("employeeId", user.EmployeeId),
+            new("firstName", user.FirstName),
+            new("lastName", user.LastName),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
         foreach (string role in roles)
         {
             claims.Add(new Claim(ClaimTypes.Role, role));
+        }
+
+        if (user.AreaId.HasValue)
+        {
+            claims.Add(new Claim("areaId", user.AreaId.Value.ToString()));
+        }
+
+        if (user.Area != null)
+        {
+            claims.Add(new Claim("areaName", user.Area.Name));
+        }
+
+        if (user.ShiftId.HasValue)
+        {
+            claims.Add(new Claim("shiftId", user.ShiftId.Value.ToString()));
+        }
+
+        if (user.Shift != null)
+        {
+            claims.Add(new Claim("shiftName", user.Shift.Name));
         }
 
         SecurityTokenDescriptor tokenDescriptor = new SecurityTokenDescriptor

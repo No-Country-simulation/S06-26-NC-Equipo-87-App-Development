@@ -10,6 +10,7 @@ namespace api.Features.Authentication.Logout;
 
 [ApiController]
 [Route("api/authentication")]
+[Tags("Authentication")]
 public class LogoutEndpoint(AppDbContext dbContext) : ControllerBase
 {
     private readonly AppDbContext _dbContext = dbContext;

@@ -2,6 +2,13 @@ using api.Data;
 using api.Features.Authentication.Common;
 using api.Features.Authentication.Login;
 using api.Features.Authentication.Register;
+using api.Features.Incidents.Create;
+using api.Features.Incidents.Detail;
+using api.Features.Incidents.List;
+using api.Features.Lookups.Areas;
+using api.Features.Lookups.IncidentTypes;
+using api.Features.Lookups.SeverityTypes;
+using api.Features.Lookups.Shifts;
 
 using FluentValidation;
 
@@ -29,6 +36,8 @@ public static class DependencyInjectionExtensions
         services.AddControllers();
         services.AddCustomOpenApi();
         services.AddHealthChecks();
+        services.AddCors();
+        services.AddHttpContextAccessor();
         return services;
     }
 
@@ -58,6 +67,13 @@ public static class DependencyInjectionExtensions
     {
         services.AddScoped<RegisterHandler>();
         services.AddScoped<LoginHandler>();
+        services.AddScoped<CreateIncidentHandler>();
+        services.AddScoped<ListIncidentsHandler>();
+        services.AddScoped<GetIncidentDetailHandler>();
+        services.AddScoped<ListAreasHandler>();
+        services.AddScoped<ListIncidentTypesHandler>();
+        services.AddScoped<ListSeverityTypesHandler>();
+        services.AddScoped<ListShiftsHandler>();
         services.AddValidatorsFromAssemblyContaining<RegisterCommandValidator>();
         return services;
     }

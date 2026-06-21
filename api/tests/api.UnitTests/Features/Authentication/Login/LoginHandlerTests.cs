@@ -14,6 +14,7 @@ namespace api.UnitTests.Features.Authentication.Login;
 public class LoginHandlerTests
 {
     private readonly Mock<UserManager<User>> _userManagerMock;
+    private readonly Mock<IPasswordHasher<User>> _passwordHasherMock;
     private readonly IConfiguration _configuration;
     private readonly LoginHandler _handler;
     private readonly List<User> _usersInDb;
@@ -23,6 +24,8 @@ public class LoginHandlerTests
         Mock<IUserStore<User>> userStoreMock = new Mock<IUserStore<User>>();
         _userManagerMock = new Mock<UserManager<User>>(
             userStoreMock.Object, null!, null!, null!, null!, null!, null!, null!, null!);
+
+        _passwordHasherMock = new Mock<IPasswordHasher<User>>();
 
         _configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -34,7 +37,7 @@ public class LoginHandlerTests
             })
             .Build();
 
-        _handler = new LoginHandler(_userManagerMock.Object, _configuration);
+        _handler = new LoginHandler(_userManagerMock.Object, _configuration, _passwordHasherMock.Object);
         _usersInDb = new List<User>();
 
         TestAsyncEnumerable<User> mockUsers = new TestAsyncEnumerable<User>(_usersInDb);
@@ -160,6 +163,82 @@ public class LoginHandlerTests
         Assert.False(result.Succeeded);
         Assert.Null(result.Token);
         Assert.Equal("Invalid credentials.", result.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task HandleAsync_ValidEmailAndPin_ReturnsToken()
+    {
+        // Arrange
+        User user = new User
+        {
+            Id = "user-pin-1",
+            Email = "operator@opscore.com",
+            UserName = "opeope",
+            EmployeeId = "0001",
+            PinHash = "hashed_pin_value"
+        };
+        _usersInDb.Add(user);
+
+        LoginCommand command = new LoginCommand
+        {
+            Identifier = "operator@opscore.com",
+            Password = "4321"
+        };
+
+        _userManagerMock.Setup(u => u.CheckPasswordAsync(user, command.Password))
+            .ReturnsAsync(false);
+
+        _passwordHasherMock.Setup(h => h.VerifyHashedPassword(user, "hashed_pin_value", "4321"))
+            .Returns(PasswordVerificationResult.Success);
+
+        _userManagerMock.Setup(u => u.GetRolesAsync(user))
+            .ReturnsAsync(new List<string> { "Operator" });
+
+        // Act
+        var result = await _handler.HandleAsync(command);
+
+        // Assert
+        Assert.True(result.Succeeded);
+        Assert.NotNull(result.Token);
+        Assert.Null(result.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task HandleAsync_ValidEmployeeIdAndPin_ReturnsToken()
+    {
+        // Arrange
+        User user = new User
+        {
+            Id = "user-pin-2",
+            Email = "supervisor@opscore.com",
+            UserName = "supsup",
+            EmployeeId = "0002",
+            PinHash = "hashed_pin_value"
+        };
+        _usersInDb.Add(user);
+
+        LoginCommand command = new LoginCommand
+        {
+            Identifier = "0002",
+            Password = "1234"
+        };
+
+        _userManagerMock.Setup(u => u.CheckPasswordAsync(user, command.Password))
+            .ReturnsAsync(false);
+
+        _passwordHasherMock.Setup(h => h.VerifyHashedPassword(user, "hashed_pin_value", "1234"))
+            .Returns(PasswordVerificationResult.Success);
+
+        _userManagerMock.Setup(u => u.GetRolesAsync(user))
+            .ReturnsAsync(new List<string> { "Supervisor" });
+
+        // Act
+        var result = await _handler.HandleAsync(command);
+
+        // Assert
+        Assert.True(result.Succeeded);
+        Assert.NotNull(result.Token);
+        Assert.Null(result.ErrorMessage);
     }
 }
 
