@@ -1,4 +1,4 @@
-name: Web Dashboard CI
+name: Web App CI/CD
 
 on:
   push:
