@@ -285,8 +285,6 @@ jobs:
             exit 1
           fi
           echo "IPA validated successfully."
-          # Normalize to a predictable filename for the upload step
-          cp "$IPA_PATH" "$RUNNER_TEMP/ipa/OpsCore.ipa"
 
       - name: Upload IPA artifact for release job
         uses: actions/upload-artifact@v4
