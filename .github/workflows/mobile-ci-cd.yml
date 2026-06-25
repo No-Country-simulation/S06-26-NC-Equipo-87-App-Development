@@ -226,23 +226,28 @@ jobs:
         working-directory: mobile/ios
         run: pod install --repo-update
 
-      - name: Resolve scheme name from xcworkspace
+      - name: Resolve workspace and scheme from expo prebuild output
         run: |
-          SCHEME=$(ls ios/*.xcworkspace 2>/dev/null | head -n 1 | xargs basename | sed 's/.xcworkspace//')
-          if [ -z "$SCHEME" ]; then
-            echo "Error: No .xcworkspace found in ios/"
+          # List what expo prebuild generated so we can debug if needed
+          echo "=== Contents of mobile/ios/ ==="
+          ls -la ios/ || true
+
+          # Find the .xcworkspace (created by pod install) using an absolute path
+          WORKSPACE=$(find "$(pwd)/ios" -maxdepth 1 -name '*.xcworkspace' | head -n 1)
+          if [ -z "$WORKSPACE" ]; then
+            echo "Error: No .xcworkspace found in $(pwd)/ios/"
             exit 1
           fi
-          echo "Using scheme: $SCHEME"
+          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          echo "Workspace: $WORKSPACE"
+          echo "Scheme: $SCHEME"
+          echo "WORKSPACE_ABS=$WORKSPACE" >> $GITHUB_ENV
           echo "SCHEME=$SCHEME" >> $GITHUB_ENV
 
-
-
       - name: Build iOS Archive - Build and archive the iOS app (unsigned)
-        working-directory: mobile/ios
         run: |
           xcodebuild archive \
-            -workspace "${{ env.SCHEME }}.xcworkspace" \
+            -workspace "${{ env.WORKSPACE_ABS }}" \
             -scheme "${{ env.SCHEME }}" \
             -configuration Release \
             -destination 'generic/platform=iOS' \
