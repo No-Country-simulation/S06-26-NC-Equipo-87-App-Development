@@ -22,9 +22,12 @@ jest.mock('../../auth/stores/useAuthStore', () => ({
   }),
 }));
 
+let mockIncidentsList: unknown[] = [];
+
 jest.mock('../../incidents/stores/useIncidentStore', () => ({
   useIncidentStore: jest.fn((selector) => {
     const mockState = {
+      incidents: mockIncidentsList,
       fetchSupervisorIncidents: mockFetchSupervisorIncidents,
       startAttention: mockStartAttention,
     };
@@ -39,6 +42,7 @@ jest.mock('react-native-safe-area-context', () => ({
 describe('<TechnicianDashboardScreen />', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockIncidentsList = [];
   });
 
   it('renders loading state on mount', async () => {
@@ -69,6 +73,7 @@ describe('<TechnicianDashboardScreen />', () => {
         reportedDate: new Date().toISOString(),
       },
     ];
+    mockIncidentsList = mockIncidents;
     mockFetchSupervisorIncidents.mockResolvedValueOnce(mockIncidents);
     let renderResult: renderer.ReactTestRenderer | null = null;
 

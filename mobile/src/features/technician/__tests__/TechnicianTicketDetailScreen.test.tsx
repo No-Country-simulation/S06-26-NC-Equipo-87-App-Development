@@ -7,9 +7,12 @@ import { SeverityBadge } from '../../../shared/components/atoms/SeverityBadge';
 
 const mockFetchIncidentDetail = jest.fn();
 
+let mockSelectedIncidentVal: unknown = null;
+
 jest.mock('../../incidents/stores/useIncidentStore', () => ({
   useIncidentStore: jest.fn((selector) => {
     const mockState = {
+      selectedIncident: mockSelectedIncidentVal,
       fetchIncidentDetail: mockFetchIncidentDetail,
     };
     return selector(mockState);
@@ -23,6 +26,7 @@ jest.mock('react-native-safe-area-context', () => ({
 describe('<TechnicianTicketDetailScreen />', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockSelectedIncidentVal = null;
   });
 
   it('renders loading state on mount', async () => {
@@ -53,6 +57,7 @@ describe('<TechnicianTicketDetailScreen />', () => {
       history: [],
     };
 
+    mockSelectedIncidentVal = mockTicketDetail;
     mockFetchIncidentDetail.mockResolvedValueOnce(mockTicketDetail);
 
     let renderResult: renderer.ReactTestRenderer | null = null;

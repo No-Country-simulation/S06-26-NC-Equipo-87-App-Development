@@ -37,6 +37,16 @@ public static class AuthenticationExtensions
 
             options.Events = new JwtBearerEvents
             {
+                OnMessageReceived = context =>
+                {
+                    string? accessToken = context.Request.Query["access_token"];
+                    Microsoft.AspNetCore.Http.PathString path = context.HttpContext.Request.Path;
+                    if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/incidents"))
+                    {
+                        context.Token = accessToken;
+                    }
+                    return Task.CompletedTask;
+                },
                 OnTokenValidated = async context =>
                 {
                     AppDbContext dbContext = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();

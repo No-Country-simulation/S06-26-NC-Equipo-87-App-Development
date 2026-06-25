@@ -33,97 +33,101 @@ export interface DetailedTechnicianTicket {
   elapsedTimeDetail: string;
 }
 
+const formatElapsed = (reportedDateStr: string): string => {
+  const reportedDate = new Date(reportedDateStr);
+  const diffMs = Date.now() - reportedDate.getTime();
+  const diffMins = Math.max(0, Math.floor(diffMs / 60000));
+  
+  if (diffMins < 60) {
+    return `hace ${diffMins} min`;
+  }
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) {
+    return `hace ${diffHours} h`;
+  }
+  const diffDays = Math.floor(diffHours / 24);
+  return `hace ${diffDays} d`;
+};
+
+const formatElapsedMins = (reportedDateStr: string): string => {
+  const reportedDate = new Date(reportedDateStr);
+  const diffMs = Date.now() - reportedDate.getTime();
+  const diffMins = Math.max(0, Math.floor(diffMs / 60000));
+  
+  const hh = String(Math.floor(diffMins / 60)).padStart(2, '0');
+  const mm = String(diffMins % 60).padStart(2, '0');
+  return `${hh}:${mm}`;
+};
+
+const mapSeverity = (severityName: string): string => {
+  const normalized = severityName.toLowerCase();
+  if (normalized === 'alto' || normalized === 'alta') return 'Alto';
+  if (normalized === 'medio' || normalized === 'media') return 'Medio';
+  return 'Bajo';
+};
+
+const mapStatusToType = (status: string): 'open' | 'in-progress' | 'closed' | 'assigned' => {
+  const normalized = status.toLowerCase().replace('_', '-');
+  if (normalized === 'assigned') {
+    return 'assigned';
+  }
+  if (normalized === 'in-progress' || normalized === 'inprogress') {
+    return 'in-progress';
+  }
+  if (normalized === 'closed') {
+    return 'closed';
+  }
+  return 'open';
+};
+
+const mapStatusToLabel = (status: string): string => {
+  const normalized = status.toLowerCase();
+  if (normalized === 'in-progress') {
+    return 'En proceso';
+  }
+  if (normalized === 'assigned') {
+    return 'Asignado';
+  }
+  if (normalized === 'closed') {
+    return 'Cerrado';
+  }
+  return 'Abierto';
+};
+
 export const TechnicianTicketDetailScreen: React.FC<TechnicianTicketDetailScreenProps> = ({
   ticketId,
   onBack,
   onResolve,
 }) => {
   const fetchIncidentDetailStore = useIncidentStore((state) => state.fetchIncidentDetail);
-  const [ticket, setTicket] = useState<DetailedTechnicianTicket | null>(null);
+  const selectedIncident = useIncidentStore((state) => state.selectedIncident);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const formatElapsed = (reportedDateStr: string): string => {
-    const reportedDate = new Date(reportedDateStr);
-    const diffMs = Date.now() - reportedDate.getTime();
-    const diffMins = Math.max(0, Math.floor(diffMs / 60000));
-    
-    if (diffMins < 60) {
-      return `hace ${diffMins} min`;
-    }
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) {
-      return `hace ${diffHours} h`;
-    }
-    const diffDays = Math.floor(diffHours / 24);
-    return `hace ${diffDays} d`;
-  };
+  const ticket = React.useMemo(() => {
+    if (!selectedIncident || selectedIncident.incidentId !== ticketId) return null;
+    return {
+      id: selectedIncident.incidentId,
+      incidentCode: selectedIncident.incidentId,
+      areaName: selectedIncident.areaName,
+      elapsedTime: formatElapsed(selectedIncident.reportedDate),
+      categoryName: selectedIncident.incidentTypeName || 'Incidente',
+      description: selectedIncident.description,
+      descriptionDetail: selectedIncident.description,
+      operatorNumber: selectedIncident.reportedByUserId ? '#' + String(selectedIncident.reportedByUserId).substring(0, 5) : 'N/A',
+      severity: mapSeverity(selectedIncident.severityTypeName),
+      status: mapStatusToType(selectedIncident.status),
+      statusLabel: mapStatusToLabel(selectedIncident.status),
+      serviceStarted: selectedIncident.status.toLowerCase() === 'in-progress',
+      elapsedTimeDetail: formatElapsedMins(selectedIncident.reportedDate),
+    };
+  }, [selectedIncident, ticketId]);
 
-  const formatElapsedMins = (reportedDateStr: string): string => {
-    const reportedDate = new Date(reportedDateStr);
-    const diffMs = Date.now() - reportedDate.getTime();
-    const diffMins = Math.max(0, Math.floor(diffMs / 60000));
-    
-    const hh = String(Math.floor(diffMins / 60)).padStart(2, '0');
-    const mm = String(diffMins % 60).padStart(2, '0');
-    return `${hh}:${mm}`;
-  };
-
-  const mapSeverity = (severityName: string): string => {
-    const normalized = severityName.toLowerCase();
-    if (normalized === 'alto' || normalized === 'alta') return 'Alto';
-    if (normalized === 'medio' || normalized === 'media') return 'Medio';
-    return 'Bajo';
-  };
-
-  const mapStatusToType = (status: string): 'open' | 'in-progress' | 'closed' | 'assigned' => {
-    const normalized = status.toLowerCase().replace('_', '-');
-    if (normalized === 'assigned') {
-      return 'assigned';
-    }
-    if (normalized === 'in-progress' || normalized === 'inprogress') {
-      return 'in-progress';
-    }
-    if (normalized === 'closed') {
-      return 'closed';
-    }
-    return 'open';
-  };
-
-  const mapStatusToLabel = (status: string): string => {
-    const normalized = status.toLowerCase();
-    if (normalized === 'in-progress') {
-      return 'En proceso';
-    }
-    if (normalized === 'assigned') {
-      return 'Asignado';
-    }
-    if (normalized === 'closed') {
-      return 'Cerrado';
-    }
-    return 'Abierto';
-  };
-
-  const fetchIncidentDetail = useCallback(async () => {
+  const fetchTicketDetail = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchIncidentDetailStore(ticketId);
-      setTicket({
-        id: data.incidentId,
-        incidentCode: data.incidentId,
-        areaName: data.areaName,
-        elapsedTime: formatElapsed(data.reportedDate),
-        categoryName: data.incidentTypeName || 'Incidente',
-        description: data.description,
-        descriptionDetail: data.description || 'Sin descripción',
-        operatorNumber: data.reportedByUserId ? '#' + data.reportedByUserId.substring(0, 5) : 'N/A',
-        severity: mapSeverity(data.severityTypeName),
-        status: mapStatusToType(data.status),
-        statusLabel: mapStatusToLabel(data.status),
-        serviceStarted: data.status.toLowerCase() === 'in-progress',
-        elapsedTimeDetail: formatElapsedMins(data.reportedDate),
-      });
+      await fetchIncidentDetailStore(ticketId);
     } catch (err: unknown) {
       setError((err as Error)?.message || 'Error al obtener los detalles del incidente.');
     } finally {
@@ -132,8 +136,8 @@ export const TechnicianTicketDetailScreen: React.FC<TechnicianTicketDetailScreen
   }, [ticketId, fetchIncidentDetailStore]);
 
   useEffect(() => {
-    fetchIncidentDetail();
-  }, [fetchIncidentDetail]);
+    fetchTicketDetail();
+  }, [fetchTicketDetail]);
 
   if (loading) {
     return (
@@ -154,7 +158,7 @@ export const TechnicianTicketDetailScreen: React.FC<TechnicianTicketDetailScreen
           <Typography variant="body" color={designTokens.colors['status-open']} style={styles.errorText}>
             {error || 'No se pudieron cargar los detalles del ticket.'}
           </Typography>
-          <Button label="Reintentar" onPress={fetchIncidentDetail} testID="detail-retry" />
+          <Button label="Reintentar" onPress={fetchTicketDetail} testID="detail-retry" />
         </View>
       </SafeAreaView>
     );

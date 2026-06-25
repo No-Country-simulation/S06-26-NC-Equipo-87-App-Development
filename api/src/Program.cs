@@ -19,9 +19,10 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 });
 
 app.UseCors(options => options
-    .AllowAnyOrigin()
+    .SetIsOriginAllowed(origin => true)
     .AllowAnyMethod()
-    .AllowAnyHeader());
+    .AllowAnyHeader()
+    .AllowCredentials());
 
 if (!app.Environment.IsDevelopment())
 {
@@ -34,12 +35,16 @@ app.MapOpenApi();
 app.MapScalarApiReference();
 // }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<api.Features.Incidents.Common.IncidentHub>("/hubs/incidents");
 app.MapHealthChecks("/health");
 app.Map("/error", () => Results.Problem());
 

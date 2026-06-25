@@ -24,7 +24,7 @@ export const TechnicianDashboardScreen: React.FC<TechnicianDashboardScreenProps>
   const user = useAuthStore((state) => state.user);
   const fetchSupervisorIncidents = useIncidentStore((state) => state.fetchSupervisorIncidents);
   const startAttentionStore = useIncidentStore((state) => state.startAttention);
-  const [tickets, setTickets] = useState<TechnicianTicket[]>([]);
+  const storeIncidents = useIncidentStore((state) => state.incidents);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -100,23 +100,7 @@ export const TechnicianDashboardScreen: React.FC<TechnicianDashboardScreenProps>
         }
       }
 
-      const backendIncidents = await fetchSupervisorIncidents();
-      
-      setTickets(
-        backendIncidents.map((item) => ({
-          id: item.incidentId,
-          incidentCode: item.incidentId,
-          areaName: item.areaName,
-          elapsedTime: formatElapsed(item.reportedDate),
-          categoryName: item.incidentTypeName || 'Incidente',
-          description: item.description,
-          operatorNumber: item.reportedByUserId ? '#' + item.reportedByUserId.substring(0, 5) : 'N/A',
-          severity: mapSeverity(item.severityTypeName),
-          status: mapStatusToType(item.status),
-          statusLabel: mapStatusToLabel(item.status),
-          serviceStarted: item.status.toLowerCase() === 'in-progress' || startedTicketIds.includes(item.incidentId),
-        }))
-      );
+      await fetchSupervisorIncidents();
       setError(null);
     } catch (err: unknown) {
       setError((err as Error)?.message || 'Error al conectar con el servidor.');
@@ -129,6 +113,22 @@ export const TechnicianDashboardScreen: React.FC<TechnicianDashboardScreenProps>
   useEffect(() => {
     fetchIncidents();
   }, [fetchIncidents]);
+
+  const tickets = React.useMemo(() => {
+    return storeIncidents.map((item) => ({
+      id: item.incidentId,
+      incidentCode: item.incidentId,
+      areaName: item.areaName,
+      elapsedTime: formatElapsed(item.reportedDate),
+      categoryName: item.incidentTypeName || 'Incidente',
+      description: item.description,
+      operatorNumber: item.reportedByUserId ? '#' + item.reportedByUserId.substring(0, 5) : 'N/A',
+      severity: mapSeverity(item.severityTypeName),
+      status: mapStatusToType(item.status),
+      statusLabel: mapStatusToLabel(item.status),
+      serviceStarted: item.status.toLowerCase() === 'in-progress' || startedTicketIds.includes(item.incidentId),
+    }));
+  }, [storeIncidents, startedTicketIds]);
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
@@ -144,11 +144,6 @@ export const TechnicianDashboardScreen: React.FC<TechnicianDashboardScreenProps>
 
   const handleStartAttention = useCallback(async (ticketId: string) => {
     setStartedTicketIds((prev) => [...prev, ticketId]);
-    setTickets((prevTickets) =>
-      prevTickets.map((t) =>
-        t.id === ticketId ? { ...t, serviceStarted: true, status: 'in-progress', statusLabel: 'En proceso' } : t
-      )
-    );
 
     try {
       await startAttentionStore(ticketId);

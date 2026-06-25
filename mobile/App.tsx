@@ -77,6 +77,18 @@ export default function App() {
     checkToken();
   }, [verifySession]);
 
+  useEffect(() => {
+    if (token) {
+      useIncidentStore.getState().startSignalR().catch((err) => {
+        console.error('Failed to start SignalR:', err);
+      });
+    } else {
+      useIncidentStore.getState().stopSignalR().catch((err) => {
+        console.error('Failed to stop SignalR:', err);
+      });
+    }
+  }, [token]);
+
   const handleLoginSuccess = (newToken: string) => {
     setCurrentScreen(getInitialScreenForToken(newToken));
   };

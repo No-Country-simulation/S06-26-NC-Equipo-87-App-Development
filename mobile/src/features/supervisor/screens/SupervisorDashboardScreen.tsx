@@ -7,7 +7,7 @@ import { SupervisorTicketList } from '../../../shared/components/organisms/Super
 import { OfflineBanner } from '../../../shared/components/molecules/OfflineBanner';
 import { TabView, TabRoute } from '../../../shared/components/molecules/TabView';
 import designTokens from '../../../shared/theme/designTokens.json';
-import { SupervisorTicket } from '../../../shared/components/molecules/SupervisorTicketCard';
+
 import { useAuthStore } from '../../auth/stores/useAuthStore';
 import { useIncidentStore } from '../../incidents/stores/useIncidentStore';
 import { ProfileMenu } from '../../../shared/components/molecules/ProfileMenu';
@@ -28,7 +28,7 @@ export const SupervisorDashboardScreen: React.FC<SupervisorDashboardScreenProps>
   const [isOffline] = useState(false);
   const user = useAuthStore((state) => state.user);
   const fetchSupervisorIncidents = useIncidentStore((state) => state.fetchSupervisorIncidents);
-  const [tickets, setTickets] = useState<SupervisorTicket[]>([]);
+  const incidents = useIncidentStore((state) => state.incidents);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>('Claudia M.');
@@ -102,22 +102,7 @@ export const SupervisorDashboardScreen: React.FC<SupervisorDashboardScreenProps>
         }
       }
 
-      const backendIncidents = await fetchSupervisorIncidents();
-      const mappedTickets: SupervisorTicket[] = backendIncidents.map((item) => ({
-        id: item.incidentId,
-        incidentCode: item.incidentId,
-        areaName: item.areaName,
-        elapsedTime: formatElapsed(item.reportedDate),
-        categoryName: item.incidentTypeName || 'Incidente',
-        description: item.description,
-        operatorNumber: item.reportedByUserId ? '#' + item.reportedByUserId.substring(0, 5) : 'N/A',
-        severity: mapSeverity(item.severityTypeName),
-        status: mapStatusToType(item.status),
-        statusLabel: mapStatusToLabel(item.status),
-        pendingSync: false,
-      }));
-
-      setTickets(mappedTickets);
+      await fetchSupervisorIncidents();
       setError(null);
     } catch (err: unknown) {
       setError((err as Error)?.message || 'Error al conectar con el servidor.');
@@ -142,6 +127,22 @@ export const SupervisorDashboardScreen: React.FC<SupervisorDashboardScreenProps>
       onLogout();
     }
   };
+
+  const tickets = React.useMemo(() => {
+    return incidents.map((item) => ({
+      id: item.incidentId,
+      incidentCode: item.incidentId,
+      areaName: item.areaName,
+      elapsedTime: formatElapsed(item.reportedDate),
+      categoryName: item.incidentTypeName || 'Incidente',
+      description: item.description,
+      operatorNumber: item.reportedByUserId ? '#' + item.reportedByUserId.substring(0, 5) : 'N/A',
+      severity: mapSeverity(item.severityTypeName),
+      status: mapStatusToType(item.status),
+      statusLabel: mapStatusToLabel(item.status),
+      pendingSync: false,
+    }));
+  }, [incidents]);
 
   const totalCount = tickets.length;
   const openCount = tickets.filter((t) => t.status === 'open').length;

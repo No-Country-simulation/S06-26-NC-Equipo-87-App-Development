@@ -9,9 +9,12 @@ const mockFetchIncidentDetail = jest.fn();
 const mockFetchTechnicians = jest.fn();
 const mockAssignTechnician = jest.fn();
 
+let mockSelectedIncidentVal: unknown = null;
+
 jest.mock('../../incidents/stores/useIncidentStore', () => ({
   useIncidentStore: jest.fn((selector) => {
     const mockState = {
+      selectedIncident: mockSelectedIncidentVal,
       fetchIncidentDetail: mockFetchIncidentDetail,
       fetchTechnicians: mockFetchTechnicians,
       assignTechnician: mockAssignTechnician,
@@ -27,6 +30,7 @@ jest.mock('react-native-safe-area-context', () => ({
 describe('<SupervisorTicketDetailScreen />', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockSelectedIncidentVal = null;
   });
 
   it('renders loading state on mount', async () => {
@@ -67,6 +71,7 @@ describe('<SupervisorTicketDetailScreen />', () => {
       },
     ];
 
+    mockSelectedIncidentVal = mockTicketDetail;
     mockFetchIncidentDetail.mockResolvedValueOnce(mockTicketDetail);
     mockFetchTechnicians.mockResolvedValueOnce(mockTechs);
 

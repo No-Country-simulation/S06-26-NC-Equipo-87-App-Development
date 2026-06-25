@@ -76,16 +76,20 @@ export const OperatorTicketDetailScreen: React.FC<OperatorTicketDetailScreenProp
   onClose,
 }) => {
   const fetchIncidentDetailStore = useIncidentStore((state) => state.fetchIncidentDetail);
-  const [incident, setIncident] = useState<MappedIncident | null>(null);
+  const selectedIncident = useIncidentStore((state) => state.selectedIncident);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const incident = React.useMemo(() => {
+    if (!selectedIncident || selectedIncident.incidentId !== incidentId) return null;
+    return mapBackendToIncident(selectedIncident);
+  }, [selectedIncident, incidentId]);
 
   const fetchIncidentDetail = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchIncidentDetailStore(incidentId);
-      setIncident(mapBackendToIncident(data));
+      await fetchIncidentDetailStore(incidentId);
     } catch (err: unknown) {
       setError((err as Error)?.message || 'Error al obtener los detalles del incidente.');
     } finally {

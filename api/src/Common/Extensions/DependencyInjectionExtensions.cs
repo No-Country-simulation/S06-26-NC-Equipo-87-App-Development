@@ -45,6 +45,7 @@ public static class DependencyInjectionExtensions
         services.AddHealthChecks();
         services.AddCors();
         services.AddHttpContextAccessor();
+        services.AddSignalR();
         return services;
     }
 
@@ -72,7 +73,7 @@ public static class DependencyInjectionExtensions
 
     private static IServiceCollection AddFeatureServices(this IServiceCollection services)
     {
-        services.AddScoped<IIncidentEventPublisher, LoggingIncidentEventPublisher>();
+        services.AddScoped<IIncidentEventPublisher, SignalRIncidentEventPublisher>();
         services.AddScoped<RegisterHandler>();
         services.AddScoped<LoginHandler>();
         services.AddScoped<CreateIncidentHandler>();

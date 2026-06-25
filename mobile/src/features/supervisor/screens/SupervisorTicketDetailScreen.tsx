@@ -7,7 +7,7 @@ import { Card } from '../../../shared/components/atoms/Card';
 import { Button } from '../../../shared/components/atoms/Button';
 import { SupervisorTicketDetailsCard } from '../../../shared/components/organisms/SupervisorTicketDetailsCard';
 import { SupervisorTicketTimelineCard } from '../../../shared/components/organisms/SupervisorTicketTimelineCard';
-import { SupervisorTicket } from '../../../shared/components/molecules/SupervisorTicketCard';
+
 import { useIncidentStore } from '../../incidents/stores/useIncidentStore';
 import designTokens from '../../../shared/theme/designTokens.json';
 
@@ -151,47 +151,40 @@ export const SupervisorTicketDetailScreen: React.FC<SupervisorTicketDetailScreen
   const fetchTechniciansStore = useIncidentStore((state) => state.fetchTechnicians);
   const assignTechnicianStore = useIncidentStore((state) => state.assignTechnician);
 
-  const [ticket, setTicket] = useState<SupervisorTicket | undefined>(undefined);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
   const [selectedTechnicianId, setSelectedTechnicianId] = useState<string | null>(null);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
-  const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
+  const selectedIncident = useIncidentStore((state) => state.selectedIncident);
+
+  const ticket = React.useMemo(() => {
+    if (!selectedIncident || selectedIncident.incidentId !== ticketId) return undefined;
+    return {
+      id: selectedIncident.incidentId,
+      incidentCode: selectedIncident.incidentId,
+      areaName: selectedIncident.areaName,
+      elapsedTime: formatElapsed(selectedIncident.reportedDate),
+      categoryName: selectedIncident.incidentTypeName || 'Incidente',
+      description: selectedIncident.description,
+      operatorNumber: selectedIncident.reportedByUserId ? '#' + String(selectedIncident.reportedByUserId).substring(0, 5) : 'N/A',
+      severity: mapSeverity(selectedIncident.severityTypeName),
+      status: mapStatusToType(selectedIncident.status),
+      statusLabel: mapStatusToLabel(selectedIncident.status),
+      pendingSync: false,
+    };
+  }, [selectedIncident, ticketId]);
+
+  const timeline = React.useMemo(() => {
+    if (!selectedIncident || selectedIncident.incidentId !== ticketId || !selectedIncident.history) return [];
+    return mapBackendHistoryToTimeline(selectedIncident.history);
+  }, [selectedIncident, ticketId]);
 
   const fetchTicketDetail = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const data = await fetchIncidentDetailStore(ticketId);
-      const mappedTicket: SupervisorTicket = {
-        id: data.incidentId,
-        incidentCode: data.incidentId,
-        areaName: data.areaName,
-        elapsedTime: formatElapsed(data.reportedDate),
-        categoryName: data.incidentTypeName || 'Incidente',
-        description: data.description,
-        operatorNumber: data.reportedByUserId ? '#' + String(data.reportedByUserId).substring(0, 5) : 'N/A',
-        severity: mapSeverity(data.severityTypeName),
-        status: mapStatusToType(data.status),
-        statusLabel: mapStatusToLabel(data.status),
-        pendingSync: false,
-      };
-      setTicket(mappedTicket);
-      
-      if (data.history && data.history.length > 0) {
-        setTimeline(mapBackendHistoryToTimeline(data.history));
-      } else {
-        setTimeline([
-          {
-            id: 'initial',
-            title: 'Incidente reportado',
-            time: formatTime(data.reportedDate),
-            color: designTokens.colors['status-open'],
-          },
-        ]);
-      }
-
       try {
         const techsData = await fetchTechniciansStore(data.areaId, data.incidentTypeId);
         const mappedTechs = techsData.map((item) => ({

@@ -58,6 +58,7 @@ public class ListIncidentsHandler(AppDbContext dbContext, IHttpContextAccessor h
         }
 
         return await incidentsQuery
+            .OrderByDescending(i => i.StatusHistories.Max(h => h.ChangedDate))
             .Select(i => new IncidentListItemResponse
             {
                 IncidentId = i.IncidentId,

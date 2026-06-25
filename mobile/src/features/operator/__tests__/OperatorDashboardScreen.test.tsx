@@ -28,9 +28,12 @@ jest.mock('../../auth/stores/useAuthStore', () => ({
   }),
 }));
 
+let mockIncidentsList: unknown[] = [];
+
 jest.mock('../../incidents/stores/useIncidentStore', () => ({
   useIncidentStore: jest.fn((selector) => {
     const mockState = {
+      incidents: mockIncidentsList,
       fetchOperatorIncidents: mockFetchOperatorIncidents,
     };
     return selector(mockState);
@@ -40,6 +43,7 @@ jest.mock('../../incidents/stores/useIncidentStore', () => ({
 describe('<OperatorDashboardScreen />', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockIncidentsList = [];
   });
 
   it('renders loading state on mount', async () => {
@@ -65,6 +69,7 @@ describe('<OperatorDashboardScreen />', () => {
       },
     ];
 
+    mockIncidentsList = mockIncidents;
     mockFetchOperatorIncidents.mockResolvedValueOnce(mockIncidents);
     let renderResult: renderer.ReactTestRenderer | null = null;
 

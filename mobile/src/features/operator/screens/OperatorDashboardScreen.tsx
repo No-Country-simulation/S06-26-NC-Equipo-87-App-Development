@@ -44,21 +44,15 @@ interface OperatorDashboardScreenProps {
   onIncidentPress?: (id: string) => void;
 }
 
-interface MappedHomeIncident {
-  id: string;
-  title: string;
-  status: 'open' | 'in-progress' | 'closed' | 'assigned';
-  statusLabel: string;
-}
 
 export const OperatorDashboardScreen: React.FC<OperatorDashboardScreenProps> = ({ onReportPress, onLogout, onIncidentPress }) => {
   const user = useAuthStore((state) => state.user);
   const fetchOperatorIncidents = useIncidentStore((state) => state.fetchOperatorIncidents);
+  const storeIncidents = useIncidentStore((state) => state.incidents);
   const [userName, setUserName] = useState<string>('Usuario');
   const [userRole, setUserRole] = useState<string>('Operador');
   const [userLine, setUserLine] = useState<string>('Sin área');
   const [userShift, setUserShift] = useState<string>('Sin turno');
-  const [incidents, setIncidents] = useState<MappedHomeIncident[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [menuVisible, setMenuVisible] = useState<boolean>(false);
@@ -96,22 +90,22 @@ export const OperatorDashboardScreen: React.FC<OperatorDashboardScreenProps> = (
       }
 
       const sinceDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const backendIncidents = await fetchOperatorIncidents(userId, sinceDate);
-
-      const mappedIncidents: MappedHomeIncident[] = backendIncidents.map((item) => ({
-        id: item.incidentId,
-        title: item.incidentTypeName || item.description || 'Incidente',
-        status: mapStatusToType(item.status),
-        statusLabel: mapStatusToLabel(item.status),
-      }));
-
-      setIncidents(mappedIncidents);
+      await fetchOperatorIncidents(userId, sinceDate);
     } catch (err: unknown) {
       setError((err as Error)?.message || 'Error al conectar con el servidor.');
     } finally {
       setLoading(false);
     }
   }, [user, fetchOperatorIncidents]);
+
+  const incidents = React.useMemo(() => {
+    return storeIncidents.map((item) => ({
+      id: item.incidentId,
+      title: item.incidentTypeName || item.description || 'Incidente',
+      status: mapStatusToType(item.status),
+      statusLabel: mapStatusToLabel(item.status),
+    }));
+  }, [storeIncidents]);
 
   useEffect(() => {
     fetchUserDataAndIncidents();

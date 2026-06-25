@@ -29,6 +29,7 @@ jest.mock('./src/shared/auth/tokenService', () => ({
 jest.mock('./src/shared/api/apiClient', () => ({
   postRequest: jest.fn(),
   getRequest: jest.fn(),
+  API_BASE_URL: 'http://localhost:8080',
 }));
 
 jest.mock('./src/features/auth/LoginScreen', () => {
