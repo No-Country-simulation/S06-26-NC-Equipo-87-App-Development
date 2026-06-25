@@ -1,0 +1,16 @@
+# Exclude git and github files
+.git
+.github
+
+# Exclude build artifacts
+bin/
+obj/
+out/
+
+# Exclude local settings
+appsettings.Development.json
+.vs/
+.vscode/
+
+# Exclude tests from build context
+tests/

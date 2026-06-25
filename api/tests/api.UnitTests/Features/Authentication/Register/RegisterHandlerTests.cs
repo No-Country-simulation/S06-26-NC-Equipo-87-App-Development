@@ -1,0 +1,342 @@
+using System.Linq.Expressions;
+
+using api.Features.Authentication.Common;
+using api.Features.Authentication.Register;
+
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore.Query;
+
+using Moq;
+
+namespace api.UnitTests.Features.Authentication.Register;
+
+public class RegisterHandlerTests
+{
+    private readonly Mock<UserManager<User>> _userManagerMock;
+    private readonly Mock<RoleManager<IdentityRole>> _roleManagerMock;
+    private readonly Mock<IPasswordHasher<User>> _passwordHasherMock;
+    private readonly RegisterHandler _handler;
+    private readonly List<User> _usersInDb;
+
+    public RegisterHandlerTests()
+    {
+        Mock<IUserStore<User>> userStoreMock = new Mock<IUserStore<User>>();
+        _userManagerMock = new Mock<UserManager<User>>(
+            userStoreMock.Object, null!, null!, null!, null!, null!, null!, null!, null!);
+
+        Mock<IRoleStore<IdentityRole>> roleStoreMock = new Mock<IRoleStore<IdentityRole>>();
+        _roleManagerMock = new Mock<RoleManager<IdentityRole>>(
+            roleStoreMock.Object, null!, null!, null!, null!);
+
+        _passwordHasherMock = new Mock<IPasswordHasher<User>>();
+        _passwordHasherMock.Setup(h => h.HashPassword(It.IsAny<User>(), It.IsAny<string>()))
+            .Returns("hashed_pin_value");
+
+        _handler = new RegisterHandler(_userManagerMock.Object, _roleManagerMock.Object, _passwordHasherMock.Object);
+        _usersInDb = new List<User>();
+
+        TestAsyncEnumerable<User> mockUsers = new TestAsyncEnumerable<User>(_usersInDb);
+        _userManagerMock.Setup(u => u.Users).Returns(mockUsers);
+
+        _userManagerMock.Setup(u => u.FindByNameAsync(It.IsAny<string>()))
+            .ReturnsAsync((string name) => _usersInDb.FirstOrDefault(u => u.UserName == name));
+    }
+
+    [Fact]
+    public async Task HandleAsync_InvalidRole_ReturnsInvalidRoleError()
+    {
+        // Arrange
+        RegisterCommand command = new RegisterCommand
+        {
+            FirstName = "John",
+            LastName = "Doe",
+            Password = "Password123!",
+            Email = "test@example.com",
+            Role = "NonExistentRole"
+        };
+
+        _roleManagerMock.Setup(r => r.RoleExistsAsync(command.Role))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _handler.HandleAsync(command);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Contains("does not exist", result.InvalidRoleError);
+        _userManagerMock.Verify(u => u.CreateAsync(It.IsAny<User>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task HandleAsync_UserCreationFails_ReturnsFailureWithErrors()
+    {
+        // Arrange
+        RegisterCommand command = new RegisterCommand
+        {
+            FirstName = "John",
+            LastName = "Doe",
+            Password = "Password123!",
+            Email = "test@example.com",
+            Role = "Operator"
+        };
+
+        _roleManagerMock.Setup(r => r.RoleExistsAsync(command.Role))
+            .ReturnsAsync(true);
+
+        IdentityError identityError = new IdentityError { Code = "DuplicateUserName", Description = "Username taken." };
+        _userManagerMock.Setup(u => u.CreateAsync(It.IsAny<User>(), command.Password))
+            .ReturnsAsync(IdentityResult.Failed(identityError));
+
+        // Act
+        var result = await _handler.HandleAsync(command);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Single(result.Errors);
+        Assert.Equal("DuplicateUserName", result.Errors.First().Code);
+    }
+
+    [Fact]
+    public async Task HandleAsync_RoleAssignmentFails_RollsBackUserAndReturnsFailure()
+    {
+        // Arrange
+        RegisterCommand command = new RegisterCommand
+        {
+            FirstName = "John",
+            LastName = "Doe",
+            Password = "Password123!",
+            Email = "test@example.com",
+            Role = "Operator"
+        };
+
+        _roleManagerMock.Setup(r => r.RoleExistsAsync(command.Role))
+            .ReturnsAsync(true);
+
+        _userManagerMock.Setup(u => u.CreateAsync(It.IsAny<User>(), command.Password))
+            .ReturnsAsync(IdentityResult.Success);
+
+        IdentityError identityError = new IdentityError { Code = "RoleAssignmentFailed", Description = "Failed to assign role." };
+        _userManagerMock.Setup(u => u.AddToRoleAsync(It.IsAny<User>(), command.Role))
+            .ReturnsAsync(IdentityResult.Failed(identityError));
+
+        _userManagerMock.Setup(u => u.DeleteAsync(It.IsAny<User>()))
+            .ReturnsAsync(IdentityResult.Success);
+
+        // Act
+        var result = await _handler.HandleAsync(command);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Single(result.Errors);
+        Assert.Equal("RoleAssignmentFailed", result.Errors.First().Code);
+        _userManagerMock.Verify(u => u.DeleteAsync(It.IsAny<User>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleAsync_ValidRequest_CreatesUserAndAssignsRoleWithAutogeneratedInfo()
+    {
+        // Arrange
+        RegisterCommand command = new RegisterCommand
+        {
+            FirstName = "John",
+            LastName = "Doe",
+            Password = "Password123!",
+            Email = "new@example.com",
+            Role = "Operator",
+            SpecialityId = 2
+        };
+
+        _roleManagerMock.Setup(r => r.RoleExistsAsync(command.Role))
+            .ReturnsAsync(true);
+
+        _userManagerMock.Setup(u => u.CreateAsync(It.IsAny<User>(), command.Password))
+            .Callback<User, string>((user, pwd) =>
+            {
+                user.Id = "generated-guid";
+                user.SpecialityId = 2;
+            })
+            .ReturnsAsync(IdentityResult.Success);
+
+        _userManagerMock.Setup(u => u.AddToRoleAsync(It.IsAny<User>(), command.Role))
+            .ReturnsAsync(IdentityResult.Success);
+
+        // Act
+        var result = await _handler.HandleAsync(command);
+
+        // Assert
+        Assert.True(result.Succeeded);
+        Assert.Equal("generated-guid", result.UserId);
+        Assert.Equal("johdoe", result.Username);
+        Assert.Equal("0001", result.EmployeeId);
+        Assert.Equal("new@example.com", result.Email);
+        Assert.Equal("John", result.FirstName);
+        Assert.Equal("Doe", result.LastName);
+        Assert.Equal("Operator", result.Role);
+        Assert.Equal(2, result.SpecialityId);
+        Assert.NotNull(result.Pin);
+        Assert.Equal(4, result.Pin.Length);
+        Assert.True(result.Pin.All(char.IsDigit));
+        _userManagerMock.Verify(u => u.CreateAsync(It.IsAny<User>(), command.Password), Times.Once);
+        _userManagerMock.Verify(u => u.AddToRoleAsync(It.IsAny<User>(), command.Role), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleAsync_UsernameCollisionAndIncrementalEmployeeId_ResolvesUniquely()
+    {
+        // Arrange
+        _usersInDb.Add(new User
+        {
+            UserName = "johdoe",
+            FirstName = "Johnny",
+            LastName = "Doe",
+            EmployeeId = "0001"
+        });
+
+        RegisterCommand command = new RegisterCommand
+        {
+            FirstName = "John",
+            LastName = "Doe",
+            Password = "Password123!",
+            Email = "another@example.com",
+            Role = "Operator"
+        };
+
+        _roleManagerMock.Setup(r => r.RoleExistsAsync(command.Role))
+            .ReturnsAsync(true);
+
+        _userManagerMock.Setup(u => u.CreateAsync(It.IsAny<User>(), command.Password))
+            .Callback<User, string>((user, pwd) => user.Id = "generated-guid-2")
+            .ReturnsAsync(IdentityResult.Success);
+
+        _userManagerMock.Setup(u => u.AddToRoleAsync(It.IsAny<User>(), command.Role))
+            .ReturnsAsync(IdentityResult.Success);
+
+        // Act
+        var result = await _handler.HandleAsync(command);
+
+        // Assert
+        Assert.True(result.Succeeded);
+        Assert.Equal("johdoe1", result.Username);
+        Assert.Equal("0002", result.EmployeeId);
+        Assert.NotNull(result.Pin);
+        Assert.Equal(4, result.Pin.Length);
+        Assert.True(result.Pin.All(char.IsDigit));
+    }
+
+    [Theory]
+    [InlineData("john", "doe", "John", "Doe")]
+    [InlineData("mary jane", "smith-o'brien", "Mary Jane", "Smith-O'brien")]
+    [InlineData("JOHN", "DOE", "John", "Doe")]
+    [InlineData("st. john", "o'hara", "St. John", "O'hara")]
+    [InlineData("  john  ", "  doe  ", "John", "Doe")]
+    [InlineData("álex", "núñez", "Álex", "Núñez")]
+    [InlineData("", "", "", "")]
+    public async Task HandleAsync_LowercaseOrMixedcaseNames_CapitalizesFirstLetters(
+        string inputFirstName, string inputLastName, string expectedFirstName, string expectedLastName)
+    {
+        // Arrange
+        RegisterCommand command = new RegisterCommand
+        {
+            FirstName = inputFirstName,
+            LastName = inputLastName,
+            Password = "Password123!",
+            Email = "another@example.com",
+            Role = "Operator"
+        };
+
+        _roleManagerMock.Setup(r => r.RoleExistsAsync(command.Role))
+            .ReturnsAsync(true);
+
+        _userManagerMock.Setup(u => u.CreateAsync(It.IsAny<User>(), command.Password))
+            .ReturnsAsync(IdentityResult.Success);
+
+        _userManagerMock.Setup(u => u.AddToRoleAsync(It.IsAny<User>(), command.Role))
+            .ReturnsAsync(IdentityResult.Success);
+
+        // Act
+        var result = await _handler.HandleAsync(command);
+
+        // Assert
+        Assert.True(result.Succeeded);
+        Assert.Equal(expectedFirstName, result.FirstName);
+        Assert.Equal(expectedLastName, result.LastName);
+    }
+}
+
+internal class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
+{
+    private readonly IQueryProvider _inner;
+
+    internal TestAsyncQueryProvider(IQueryProvider inner)
+    {
+        _inner = inner;
+    }
+
+    public IQueryable CreateQuery(Expression expression)
+    {
+        return new TestAsyncEnumerable<TEntity>(expression);
+    }
+
+    public IQueryable<TElement> CreateQuery<TElement>(Expression expression)
+    {
+        return new TestAsyncEnumerable<TElement>(expression);
+    }
+
+    public object? Execute(Expression expression)
+    {
+        return _inner.Execute(expression);
+    }
+
+    public TResult Execute<TResult>(Expression expression)
+    {
+        return _inner.Execute<TResult>(expression);
+    }
+
+    public TResult ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken = default)
+    {
+        var expectedResultType = typeof(TResult).GetGenericArguments()[0];
+        object? executionResult = typeof(IQueryProvider)
+            .GetMethods()
+            .First(m => m.Name == nameof(IQueryProvider.Execute) && m.IsGenericMethod)
+            .MakeGenericMethod(expectedResultType)
+            .Invoke(_inner, new[] { expression });
+
+        return (TResult)typeof(Task).GetMethod(nameof(Task.FromResult))!
+            .MakeGenericMethod(expectedResultType)
+            .Invoke(null, new[] { executionResult })!;
+    }
+}
+
+internal class TestAsyncEnumerable<T> : EnumerableQuery<T>, IAsyncEnumerable<T>, IQueryable<T>
+{
+    public TestAsyncEnumerable(IEnumerable<T> enumerable) : base(enumerable)
+    { }
+
+    public TestAsyncEnumerable(Expression expression) : base(expression)
+    { }
+
+    public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+    {
+        return new TestAsyncEnumerator<T>(this.AsEnumerable().GetEnumerator());
+    }
+
+    IQueryProvider IQueryable.Provider => new TestAsyncQueryProvider<T>(this);
+}
+
+internal class TestAsyncEnumerator<T>(IEnumerator<T> inner) : IAsyncEnumerator<T>
+{
+    private readonly IEnumerator<T> _inner = inner;
+
+    public T Current => _inner.Current;
+
+    public ValueTask DisposeAsync()
+    {
+        _inner.Dispose();
+        return ValueTask.CompletedTask;
+    }
+
+    public ValueTask<bool> MoveNextAsync()
+    {
+        return ValueTask.FromResult(_inner.MoveNext());
+    }
+}

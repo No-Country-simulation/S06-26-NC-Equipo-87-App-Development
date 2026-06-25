@@ -1,0 +1,205 @@
+name: Web App CI/CD
+
+on:
+  push:
+    paths:
+      - 'web/**'
+      - '.github/workflows/web-ci-cd.yml'
+  pull_request:
+    paths:
+      - 'web/**'
+      - '.github/workflows/web-ci-cd.yml'
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: web
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+          cache-dependency-path: 'web/package-lock.json'
+
+      - name: Cache Node Modules
+        id: cache-node-modules
+        uses: actions/cache@v4
+        with:
+          path: web/node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('web/package-lock.json') }}
+          restore-keys: |
+            node-modules-${{ runner.os }}-
+
+      - name: Install dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Build Dashboard
+        run: npm run build
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: web/dist
+          retention-days: 1
+
+  lint:
+    name: Format Checks
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+
+      - name: Restore Node Modules
+        uses: actions/cache/restore@v4
+        with:
+          path: web/node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('web/package-lock.json') }}
+          fail-on-cache-miss: true
+
+      - name: Run Linter
+        run: npm run lint
+
+      - name: TypeScript compiler check
+        run: npx tsc -b
+
+  test-unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+
+      - name: Restore Node Modules
+        uses: actions/cache/restore@v4
+        with:
+          path: web/node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('web/package-lock.json') }}
+          fail-on-cache-miss: true
+
+      - name: Run Unit Tests
+        run: npm run test:unit
+
+  test-integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+
+      - name: Restore Node Modules
+        uses: actions/cache/restore@v4
+        with:
+          path: web/node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('web/package-lock.json') }}
+          fail-on-cache-miss: true
+
+      - name: Run Integration Tests
+        run: npm run test:integration
+
+  test-e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+
+      - name: Restore Node Modules
+        uses: actions/cache/restore@v4
+        with:
+          path: web/node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('web/package-lock.json') }}
+          fail-on-cache-miss: true
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: web/dist
+
+      - name: Cache Playwright Browsers
+        id: cache-playwright
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ hashFiles('web/package-lock.json') }}
+          restore-keys: |
+            playwright-browsers-${{ runner.os }}-
+
+      - name: Install Playwright Browsers
+        if: steps.cache-playwright.outputs.cache-hit != 'true'
+        run: npx playwright install chromium --with-deps
+
+      - name: Install Playwright System Dependencies Only
+        if: steps.cache-playwright.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: Run Playwright E2E tests
+        run: npm run test:e2e
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: [build, lint, test-unit, test-integration, test-e2e]
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+    environment: production
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VITE_API_URL: ${{ secrets.VITE_API_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+
+      - name: Restore Node Modules
+        uses: actions/cache/restore@v4
+        with:
+          path: web/node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('web/package-lock.json') }}
+          fail-on-cache-miss: true
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Project Information
+        run: vercel pull --yes --environment=production
+
+      - name: Build Project Artifacts
+        run: vercel build --prod
+
+      - name: Deploy Project Artifacts to Vercel
+        run: vercel deploy --prebuilt --prod

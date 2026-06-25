@@ -1,0 +1,127 @@
+{
+  "colors": {
+    "background-dark": "#1B1E22",
+    "background-primary": "#F1EFE8",
+    "surface-card": "#FFFFFF",
+    "surface-dark-card": "#2E3238",
+    "text-primary": "#2C2C2A",
+    "text-secondary": "#5F5E5A",
+    "text-tertiary": "#888780",
+    "text-on-dark": "#E8E6DF",
+    "status-open": "#E24B4A",
+    "status-open-badge-text": "#791F1F",
+    "status-in-progress": "#BA7517",
+    "status-in-progress-badge-text": "#633806",
+    "status-closed": "#1D9E75",
+    "status-closed-badge-text": "#085041"
+  },
+  "typography": {
+    "display": {
+      "fontFamily": "IBM Plex Sans",
+      "fontSize": "22px",
+      "fontWeight": "500",
+      "lineHeight": "1.2"
+    },
+    "heading": {
+      "fontFamily": "IBM Plex Sans",
+      "fontSize": "17px",
+      "fontWeight": "500",
+      "lineHeight": "1.3"
+    },
+    "body": {
+      "fontFamily": "IBM Plex Sans",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "lineHeight": "1.5"
+    },
+    "label": {
+      "fontFamily": "IBM Plex Sans",
+      "fontSize": "13px",
+      "fontWeight": "500",
+      "lineHeight": "1.4"
+    },
+    "caption": {
+      "fontFamily": "IBM Plex Sans",
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "lineHeight": "1.4"
+    },
+    "micro": {
+      "fontFamily": "IBM Plex Sans",
+      "fontSize": "11px",
+      "fontWeight": "500",
+      "textTransform": "uppercase",
+      "letterSpacing": "0.07em"
+    },
+    "mono": {
+      "fontFamily": "IBM Plex Mono",
+      "fontSize": "14px",
+      "fontWeight": "500"
+    }
+  },
+  "rounded": {
+    "sm": "4px",
+    "md": "8px",
+    "lg": "16px",
+    "full": "9999px"
+  },
+  "spacing": {
+    "1": "4px",
+    "2": "8px",
+    "3": "12px",
+    "4": "16px",
+    "5": "24px",
+    "6": "32px",
+    "gutter": "16px",
+    "margin-mobile": "16px"
+  },
+  "components": {
+    "input-dark": {
+      "background": "#2E3238",
+      "textColor": "#E8E6DF",
+      "borderRadius": "8px",
+      "height": "48px"
+    },
+    "button-primary": {
+      "background": "#F1EFE8",
+      "textColor": "#2C2C2A",
+      "borderRadius": "8px",
+      "height": "48px"
+    },
+    "status-badge-open": {
+      "background": "#E24B4A",
+      "textColor": "#791F1F",
+      "borderRadius": "4px"
+    },
+    "status-badge-in-progress": {
+      "background": "#BA7517",
+      "textColor": "#633806",
+      "borderRadius": "4px"
+    },
+    "status-badge-closed": {
+      "background": "#1D9E75",
+      "textColor": "#085041",
+      "borderRadius": "4px"
+    },
+    "ticket-card": {
+      "background": "#FFFFFF",
+      "border": "1px solid #F1EFE8",
+      "padding": "16px"
+    },
+    "button-red": {
+      "background": "#FDF0F0",
+      "borderColor": "#A94442",
+      "textColor": "#721C24"
+    },
+    "button-yellow": {
+      "background": "#FDF5E6",
+      "borderColor": "#A06A38",
+      "textColor": "#6E4720"
+    },
+    "button-green": {
+      "background": "#EEF7EA",
+      "borderColor": "#4E803C",
+      "textColor": "#2B5115"
+    }
+  }
+}
