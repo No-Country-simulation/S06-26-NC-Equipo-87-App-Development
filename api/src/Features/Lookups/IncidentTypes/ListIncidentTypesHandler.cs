@@ -11,6 +11,8 @@ public class ListIncidentTypesHandler(AppDbContext dbContext)
 
     public async Task<List<IncidentType>> HandleAsync()
     {
-        return await _dbContext.IncidentTypes.ToListAsync();
+        return await _dbContext.IncidentTypes
+            .Include(it => it.Speciality)
+            .ToListAsync();
     }
 }

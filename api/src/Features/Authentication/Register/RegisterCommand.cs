@@ -12,7 +12,9 @@ public class RegisterCommand
 
     public string Role { get; set; } = string.Empty;
 
-    public int? AreaId { get; set; }
+    public List<int> AreaIds { get; set; } = new();
 
     public int? ShiftId { get; set; }
+
+    public int? SpecialityId { get; set; }
 }

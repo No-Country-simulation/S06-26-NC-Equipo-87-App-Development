@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Card } from '../atoms/Card';
 import { Typography } from '../atoms/Typography';
 import { StatusBadge, StatusType } from '../atoms/StatusBadge';
@@ -10,23 +10,26 @@ interface IncidentItemProps {
   title: string;
   status: StatusType;
   statusLabel: string;
+  onPress?: () => void;
 }
 
-export const IncidentItem: React.FC<IncidentItemProps> = ({ id, title, status, statusLabel }) => {
+export const IncidentItem: React.FC<IncidentItemProps> = ({ id, title, status, statusLabel, onPress }) => {
   return (
-    <Card style={styles.card} padding={15}>
-      <View style={styles.content}>
-        <View style={styles.info}>
-          <Typography variant="mono" color={designTokens.colors['text-tertiary']} style={styles.id}>
-            {id}
-          </Typography>
-          <Typography variant="label" color={designTokens.colors['text-primary']}>
-            {title}
-          </Typography>
+    <TouchableOpacity activeOpacity={0.7} onPress={onPress}>
+      <Card style={styles.card} padding={15}>
+        <View style={styles.content}>
+          <View style={styles.info}>
+            <Typography variant="mono" color={designTokens.colors['text-tertiary']} style={styles.id}>
+              {id}
+            </Typography>
+            <Typography variant="label" color={designTokens.colors['text-primary']}>
+              {title}
+            </Typography>
+          </View>
+          <StatusBadge status={status} label={statusLabel} />
         </View>
-        <StatusBadge status={status} label={statusLabel} />
-      </View>
-    </Card>
+      </Card>
+    </TouchableOpacity>
   );
 };
 

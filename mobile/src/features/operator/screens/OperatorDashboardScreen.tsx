@@ -6,24 +6,9 @@ import { ReportButton } from '../../../shared/components/molecules/ReportButton'
 import { IncidentList } from '../../../shared/components/organisms/IncidentList';
 import { Typography } from '../../../shared/components/atoms/Typography';
 import { Button } from '../../../shared/components/atoms/Button';
-import { getRequest, postRequest } from '../../../shared/api/apiClient';
-import { getToken, deleteToken } from '../../../shared/auth/tokenService';
-import { decodeJwt } from '../../../shared/auth/jwtDecoder';
+import { useAuthStore } from '../../auth/stores/useAuthStore';
+import { useIncidentStore } from '../../incidents/stores/useIncidentStore';
 import designTokens from '../../../shared/theme/designTokens.json';
-
-interface BackendIncident {
-  incidentId: string;
-  description: string;
-  areaId: number;
-  areaName: string;
-  incidentTypeId: number;
-  incidentTypeName: string;
-  severityTypeId: number;
-  severityTypeName: string;
-  status: string;
-  reportedByUserId: string;
-  reportedDate: string;
-}
 
 const mapStatusToLabel = (status: string): string => {
   const normalized = status.toLowerCase();
@@ -33,40 +18,42 @@ const mapStatusToLabel = (status: string): string => {
   if (normalized === 'closed') {
     return 'Cerrado';
   }
+  if (normalized === 'assigned') {
+    return 'Asignado';
+  }
   return 'Abierto';
 };
 
-const mapStatusToType = (status: string): 'open' | 'in-progress' | 'closed' => {
-  const normalized = status.toLowerCase();
-  if (normalized === 'in-progress' || normalized === 'closed') {
-    return normalized;
+const mapStatusToType = (status: string): 'open' | 'in-progress' | 'closed' | 'assigned' => {
+  const normalized = status.toLowerCase().replace('_', '-');
+  if (normalized === 'in-progress' || normalized === 'inprogress') {
+    return 'in-progress';
+  }
+  if (normalized === 'closed') {
+    return 'closed';
+  }
+  if (normalized === 'assigned') {
+    return 'assigned';
   }
   return 'open';
 };
 
-interface OperatorHomeScreenProps {
+interface OperatorDashboardScreenProps {
   onReportPress?: () => void;
   onLogout?: () => void;
+  onIncidentPress?: (id: string) => void;
 }
 
 interface MappedHomeIncident {
   id: string;
   title: string;
-  status: 'open' | 'in-progress' | 'closed';
+  status: 'open' | 'in-progress' | 'closed' | 'assigned';
   statusLabel: string;
 }
 
-interface UserClaims {
-  sub?: string;
-  firstName?: string;
-  lastName?: string;
-  areaName?: string;
-  shiftName?: string;
-  role?: string;
-  [key: string]: unknown;
-}
-
-export const OperatorHomeScreen: React.FC<OperatorHomeScreenProps> = ({ onReportPress, onLogout }) => {
+export const OperatorDashboardScreen: React.FC<OperatorDashboardScreenProps> = ({ onReportPress, onLogout, onIncidentPress }) => {
+  const user = useAuthStore((state) => state.user);
+  const fetchOperatorIncidents = useIncidentStore((state) => state.fetchOperatorIncidents);
   const [userName, setUserName] = useState<string>('Usuario');
   const [userRole, setUserRole] = useState<string>('Operador');
   const [userLine, setUserLine] = useState<string>('Sin área');
@@ -80,39 +67,36 @@ export const OperatorHomeScreen: React.FC<OperatorHomeScreenProps> = ({ onReport
     setLoading(true);
     setError(null);
     try {
-      const cachedToken = await getToken();
-      if (!cachedToken) {
+      if (!user) {
         throw new Error('No valid authentication session found.');
       }
 
-      const decodedClaims = decodeJwt(cachedToken) as UserClaims | null;
-      let userId = '';
-      if (decodedClaims) {
-        userId = decodedClaims.sub || '';
-        const rawFirstName = decodedClaims.firstName || '';
-        const rawLastName = decodedClaims.lastName || '';
-        if (rawFirstName) {
-          const lastNameInitial = rawLastName ? ` ${rawLastName.charAt(0)}.` : '';
-          setUserName(`${rawFirstName}${lastNameInitial}`);
+      const userId = user.sub || '';
+      const rawFirstName = user.firstName || '';
+      const rawLastName = user.lastName || '';
+      if (rawFirstName) {
+        const lastNameInitial = rawLastName ? ` ${rawLastName.charAt(0)}.` : '';
+        setUserName(`${rawFirstName}${lastNameInitial}`);
+      }
+      if (user.areaName) {
+        if (Array.isArray(user.areaName)) {
+          setUserLine(user.areaName.join(', '));
+        } else {
+          setUserLine(user.areaName as string);
         }
-        if (decodedClaims.areaName) {
-          setUserLine(decodedClaims.areaName);
-        }
-        if (decodedClaims.shiftName) {
-          setUserShift(decodedClaims.shiftName);
-        }
+      }
+      if (user.shiftName) {
+        setUserShift(user.shiftName as string);
+      }
 
-        const roleClaim = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
-        const roleValue = (decodedClaims[roleClaim] as string) || decodedClaims.role;
-        if (roleValue) {
-          setUserRole(roleValue);
-        }
+      const roleClaim = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
+      const roleValue = (user[roleClaim] as string) || user.role;
+      if (roleValue) {
+        setUserRole(roleValue);
       }
 
       const sinceDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const backendIncidents = await getRequest<BackendIncident[]>(
-        `/api/incidents?reportedByUserId=${encodeURIComponent(userId)}&since=${encodeURIComponent(sinceDate)}`
-      );
+      const backendIncidents = await fetchOperatorIncidents(userId, sinceDate);
 
       const mappedIncidents: MappedHomeIncident[] = backendIncidents.map((item) => ({
         id: item.incidentId,
@@ -127,7 +111,7 @@ export const OperatorHomeScreen: React.FC<OperatorHomeScreenProps> = ({ onReport
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user, fetchOperatorIncidents]);
 
   useEffect(() => {
     fetchUserDataAndIncidents();
@@ -140,15 +124,8 @@ export const OperatorHomeScreen: React.FC<OperatorHomeScreenProps> = ({ onReport
   };
 
   const handleLogout = async () => {
-    try {
-      await postRequest('/api/authentication/logout', {});
-    } catch {
-      // Swallow error if offline
-    } finally {
-      await deleteToken();
-      if (onLogout) {
-        onLogout();
-      }
+    if (onLogout) {
+      onLogout();
     }
   };
 
@@ -186,6 +163,7 @@ export const OperatorHomeScreen: React.FC<OperatorHomeScreenProps> = ({ onReport
             title="Tus últimos reportes"
             incidents={incidents}
             footerNote="Solo se muestran tus reportes de las últimas 24 h"
+            onIncidentPress={onIncidentPress}
           />
         )}
       </ScrollView>

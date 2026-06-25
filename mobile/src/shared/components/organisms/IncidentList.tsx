@@ -16,9 +16,10 @@ interface IncidentListProps {
   title: string;
   incidents: Incident[];
   footerNote?: string;
+  onIncidentPress?: (id: string) => void;
 }
 
-export const IncidentList: React.FC<IncidentListProps> = ({ title, incidents, footerNote }) => {
+export const IncidentList: React.FC<IncidentListProps> = ({ title, incidents, footerNote, onIncidentPress }) => {
   return (
     <View style={styles.container}>
       <Typography variant="micro" color={designTokens.colors['text-tertiary']} style={styles.title}>
@@ -32,6 +33,7 @@ export const IncidentList: React.FC<IncidentListProps> = ({ title, incidents, fo
             title={incident.title}
             status={incident.status}
             statusLabel={incident.statusLabel}
+            onPress={() => onIncidentPress?.(incident.id)}
           />
         ))}
       </View>

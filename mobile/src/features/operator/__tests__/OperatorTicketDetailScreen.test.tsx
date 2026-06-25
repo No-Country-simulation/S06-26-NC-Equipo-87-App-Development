@@ -1,7 +1,7 @@
 import React, { act } from 'react';
 import renderer from 'react-test-renderer';
 import { ActivityIndicator } from 'react-native';
-import { IncidentDetailScreen } from '../screens/IncidentDetailScreen';
+import { OperatorTicketDetailScreen } from '../screens/OperatorTicketDetailScreen';
 import { getRequest } from '../../../shared/api/apiClient';
 import { IncidentConfirmationHero } from '../../../shared/components/organisms/IncidentConfirmationHero';
 import { IncidentSummaryCard } from '../../../shared/components/organisms/IncidentSummaryCard';
@@ -39,7 +39,7 @@ const mockBackendIncident = {
   reportedDate: '2026-06-18T09:44:00.000Z',
 };
 
-describe('<IncidentDetailScreen />', () => {
+describe('<OperatorTicketDetailScreen />', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -50,7 +50,7 @@ describe('<IncidentDetailScreen />', () => {
 
     await act(async () => {
       renderResult = renderer.create(
-        <IncidentDetailScreen incidentId="INC-0043" />
+        <OperatorTicketDetailScreen incidentId="INC-0043" />
       );
     });
 
@@ -64,7 +64,7 @@ describe('<IncidentDetailScreen />', () => {
 
     await act(async () => {
       renderResult = renderer.create(
-        <IncidentDetailScreen incidentId="INC-0043" />
+        <OperatorTicketDetailScreen incidentId="INC-0043" />
       );
     });
 
@@ -84,7 +84,7 @@ describe('<IncidentDetailScreen />', () => {
 
     await act(async () => {
       renderResult = renderer.create(
-        <IncidentDetailScreen incidentId="INC-0043" />
+        <OperatorTicketDetailScreen incidentId="INC-0043" />
       );
     });
 
@@ -98,7 +98,7 @@ describe('<IncidentDetailScreen />', () => {
 
     await act(async () => {
       renderResult = renderer.create(
-        <IncidentDetailScreen incidentId="INC-0043" />
+        <OperatorTicketDetailScreen incidentId="INC-0043" />
       );
     });
 
@@ -112,7 +112,7 @@ describe('<IncidentDetailScreen />', () => {
 
     await act(async () => {
       renderResult = renderer.create(
-        <IncidentDetailScreen incidentId="INC-0043" />
+        <OperatorTicketDetailScreen incidentId="INC-0043" />
       );
     });
 
@@ -134,7 +134,7 @@ describe('<IncidentDetailScreen />', () => {
 
     await act(async () => {
       renderResult = renderer.create(
-        <IncidentDetailScreen incidentId="INC-0043" onClose={onClose} />
+        <OperatorTicketDetailScreen incidentId="INC-0043" onClose={onClose} />
       );
     });
 
@@ -156,7 +156,7 @@ describe('<IncidentDetailScreen />', () => {
 
     await act(async () => {
       renderResult = renderer.create(
-        <IncidentDetailScreen incidentId="INC-0043" onBack={onBack} />
+        <OperatorTicketDetailScreen incidentId="INC-0043" onBack={onBack} />
       );
     });
 

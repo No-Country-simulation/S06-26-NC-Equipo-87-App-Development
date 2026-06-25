@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { Typography } from './Typography';
 import designTokens from '../../theme/designTokens.json';
 
-export type StatusType = 'open' | 'in-progress' | 'closed';
+export type StatusType = 'open' | 'in-progress' | 'closed' | 'assigned';
 
 interface StatusBadgeProps {
   status: StatusType;
@@ -52,6 +52,9 @@ const styles = StyleSheet.create({
   closed: {
     backgroundColor: '#e1f5ee',
   },
+  assigned: {
+    backgroundColor: '#E6F1FB',
+  },
 });
 
 const dotStyles = StyleSheet.create({
@@ -64,10 +67,14 @@ const dotStyles = StyleSheet.create({
   closed: {
     backgroundColor: designTokens.colors['status-closed'],
   },
+  assigned: {
+    backgroundColor: designTokens.colors['status-assigned'],
+  },
 });
 
 const labelColors = {
   open: designTokens.colors['status-open-badge-text'],
   'in-progress': designTokens.colors['status-in-progress-badge-text'],
   closed: designTokens.colors['status-closed-badge-text'],
+  assigned: designTokens.colors['status-assigned-badge-text'],
 };

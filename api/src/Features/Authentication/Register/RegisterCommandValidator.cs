@@ -38,13 +38,27 @@ public class RegisterCommandValidator : AbstractValidator<RegisterCommand>
             .Must(role => role == "Operator" || role == "Supervisor" || role == "Technician" || role == "Plant Manager")
             .WithMessage("Role must be a valid option (Operator, Supervisor, Technician, Plant Manager).");
 
-        RuleFor(x => x.AreaId)
-            .MustAsync(async (id, cancellation) => !id.HasValue || await dbContext.Areas.AnyAsync(a => a.Id == id.Value && a.Status == "Active", cancellation))
-            .WithMessage("Area must exist and be active.");
+        RuleFor(x => x.AreaIds)
+            .MustAsync(async (ids, cancellation) =>
+            {
+                if (ids == null || ids.Count == 0)
+                {
+                    return true;
+                }
+                int activeAreasCount = await dbContext.Areas
+                    .CountAsync(a => ids.Contains(a.Id) && a.Status == "Active", cancellation);
+                return activeAreasCount == ids.Distinct().Count();
+            })
+            .WithMessage("All assigned areas must exist and be active.");
 
         RuleFor(x => x.ShiftId)
             .MustAsync(async (id, cancellation) => !id.HasValue || await dbContext.Shifts.AnyAsync(s => s.Id == id.Value && s.Status == "Active", cancellation))
             .WithMessage("Shift must exist and be active.");
+
+        RuleFor(x => x.SpecialityId)
+            .NotEmpty().When(x => x.Role == "Technician").WithMessage("Speciality is required for technicians.")
+            .MustAsync(async (id, cancellation) => !id.HasValue || await dbContext.Specialities.AnyAsync(s => s.Id == id.Value && s.Status == "Active", cancellation))
+            .WithMessage("Speciality must exist and be active.");
     }
 
     private bool HasUppercase(string password)

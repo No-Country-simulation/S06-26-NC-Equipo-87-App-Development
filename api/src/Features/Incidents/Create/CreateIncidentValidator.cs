@@ -12,7 +12,11 @@ public class CreateIncidentValidator : AbstractValidator<CreateIncidentCommand>
     {
         RuleFor(x => x.Description)
             .NotEmpty()
-            .WithMessage("Description is required.");
+            .WithMessage("Description is required.")
+            .MinimumLength(20)
+            .WithMessage("Description must be at least 20 characters.")
+            .MaximumLength(500)
+            .WithMessage("Description cannot exceed 500 characters.");
 
         RuleFor(x => x.AreaId)
             .MustAsync(async (id, cancellation) => await dbContext.Areas.AnyAsync(a => a.Id == id && a.Status == "Active", cancellation))

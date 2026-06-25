@@ -16,8 +16,9 @@ public class RegisterResult
     public string? LastName { get; set; }
     public string? EmployeeId { get; set; }
     public string? Pin { get; set; }
-    public int? AreaId { get; set; }
+    public List<int> AreaIds { get; set; } = new();
     public int? ShiftId { get; set; }
+    public int? SpecialityId { get; set; }
     public IEnumerable<IdentityError> Errors { get; set; } = Enumerable.Empty<IdentityError>();
     public string? InvalidRoleError { get; set; }
 }
@@ -113,16 +114,23 @@ public class RegisterHandler(UserManager<User> userManager, RoleManager<Identity
 
     private User CreateUserEntity(RegisterCommand command, string username, string employeeId)
     {
-        return new User
+        User user = new User
         {
             UserName = username,
             Email = command.Email,
             FirstName = CapitalizeName(command.FirstName),
             LastName = CapitalizeName(command.LastName),
             EmployeeId = employeeId,
-            AreaId = command.AreaId,
-            ShiftId = command.ShiftId
+            ShiftId = command.ShiftId,
+            SpecialityId = command.SpecialityId
         };
+
+        if (command.AreaIds != null)
+        {
+            user.UserAreas = command.AreaIds.Select(id => new UserArea { AreaId = id }).ToList();
+        }
+
+        return user;
     }
 
     private string CapitalizeName(string name)
@@ -158,8 +166,9 @@ public class RegisterHandler(UserManager<User> userManager, RoleManager<Identity
             FirstName = user.FirstName,
             LastName = user.LastName,
             EmployeeId = user.EmployeeId,
-            AreaId = user.AreaId,
+            AreaIds = user.UserAreas.Select(ua => ua.AreaId).ToList(),
             ShiftId = user.ShiftId,
+            SpecialityId = user.SpecialityId,
             Pin = plaintextPin
         };
     }

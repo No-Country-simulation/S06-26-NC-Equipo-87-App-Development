@@ -8,16 +8,17 @@ interface DetailRowProps {
   value: string;
   valueColor?: string;
   isLast?: boolean;
+  valueVariant?: 'display' | 'heading' | 'body' | 'label' | 'caption' | 'micro' | 'mono';
 }
 
-export const DetailRow: React.FC<DetailRowProps> = ({ label, value, valueColor, isLast }) => (
+export const DetailRow: React.FC<DetailRowProps> = ({ label, value, valueColor, isLast, valueVariant = 'label' }) => (
   <View>
     <View style={styles.row}>
       <Typography variant="body" color={designTokens.colors['text-secondary']} style={styles.label}>
         {label}
       </Typography>
       <Typography
-        variant="label"
+        variant={valueVariant}
         color={valueColor ?? designTokens.colors['text-primary']}
         style={styles.value}
       >

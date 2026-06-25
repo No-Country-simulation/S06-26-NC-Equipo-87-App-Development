@@ -100,7 +100,8 @@ public class LoginIntegrationTests(IntegrationTestFactory factory) : IClassFixtu
             LastName = "Brown",
             Password = "TechnicianPassword1!",
             Email = "charlie.brown@opscore.com",
-            Role = "Technician"
+            Role = "Technician",
+            SpecialityId = 1
         };
         var registerResponse = await _client.PostAsJsonAsync("/api/authentication/register", registerCommand);
         Assert.Equal(HttpStatusCode.Created, registerResponse.StatusCode);

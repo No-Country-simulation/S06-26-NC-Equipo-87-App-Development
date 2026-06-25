@@ -50,8 +50,16 @@ public class LoginHandler(UserManager<User> userManager, IConfiguration configur
     private async Task<User?> FindUserAsync(string identifier)
     {
         return identifier.Contains('@')
-            ? await _userManager.Users.Include(u => u.Area).Include(u => u.Shift).FirstOrDefaultAsync(u => u.Email == identifier)
-            : await _userManager.Users.Include(u => u.Area).Include(u => u.Shift).FirstOrDefaultAsync(u => u.EmployeeId == identifier);
+            ? await _userManager.Users
+                .Include(u => u.UserAreas)
+                    .ThenInclude(ua => ua.Area)
+                .Include(u => u.Shift)
+                .FirstOrDefaultAsync(u => u.Email == identifier)
+            : await _userManager.Users
+                .Include(u => u.UserAreas)
+                    .ThenInclude(ua => ua.Area)
+                .Include(u => u.Shift)
+                .FirstOrDefaultAsync(u => u.EmployeeId == identifier);
     }
 
     private bool VerifyPin(User user, string password)
@@ -92,14 +100,13 @@ public class LoginHandler(UserManager<User> userManager, IConfiguration configur
             claims.Add(new Claim(ClaimTypes.Role, role));
         }
 
-        if (user.AreaId.HasValue)
+        foreach (var userArea in user.UserAreas)
         {
-            claims.Add(new Claim("areaId", user.AreaId.Value.ToString()));
-        }
-
-        if (user.Area != null)
-        {
-            claims.Add(new Claim("areaName", user.Area.Name));
+            claims.Add(new Claim("areaId", userArea.AreaId.ToString()));
+            if (userArea.Area != null)
+            {
+                claims.Add(new Claim("areaName", userArea.Area.Name));
+            }
         }
 
         if (user.ShiftId.HasValue)

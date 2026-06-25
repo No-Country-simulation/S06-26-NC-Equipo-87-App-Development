@@ -23,7 +23,7 @@ public class RegisterIntegrationTests(IntegrationTestFactory factory) : IClassFi
             Password = "OperatorPassword123!",
             Email = "operator@opscore.com",
             Role = "Operator",
-            AreaId = 1,
+            AreaIds = new List<int> { 1, 2 },
             ShiftId = 1
         };
 
@@ -43,7 +43,7 @@ public class RegisterIntegrationTests(IntegrationTestFactory factory) : IClassFi
         Assert.Equal(command.FirstName, result.FirstName);
         Assert.Equal(command.LastName, result.LastName);
         Assert.Equal(command.Role, result.Role);
-        Assert.Equal(command.AreaId, result.AreaId);
+        Assert.Equal(command.AreaIds, result.AreaIds);
         Assert.Equal(command.ShiftId, result.ShiftId);
     }
 
@@ -133,7 +133,7 @@ public class RegisterIntegrationTests(IntegrationTestFactory factory) : IClassFi
             Password = "OperatorPassword123!",
             Email = "invalidarea@opscore.com",
             Role = "Operator",
-            AreaId = 999
+            AreaIds = new List<int> { 999 }
         };
 
         // Act
@@ -143,8 +143,8 @@ public class RegisterIntegrationTests(IntegrationTestFactory factory) : IClassFi
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         ValidationProblemDetails? problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
         Assert.NotNull(problem);
-        Assert.Contains("AreaId", problem.Errors.Keys);
-        Assert.Equal("Area must exist and be active.", problem.Errors["AreaId"][0]);
+        Assert.Contains("AreaIds", problem.Errors.Keys);
+        Assert.Equal("All assigned areas must exist and be active.", problem.Errors["AreaIds"][0]);
     }
 
     [Fact]
@@ -183,7 +183,7 @@ public class RegisterIntegrationTests(IntegrationTestFactory factory) : IClassFi
             Password = "UserPassword1!",
             Email = "testuser@opscore.com",
             Role = "Operator",
-            AreaId = 1,
+            AreaIds = new List<int> { 1, 2 },
             ShiftId = 1
         };
         HttpResponseMessage registerResponse = await _client.PostAsJsonAsync("/api/authentication/register", registerCommand);
@@ -205,15 +205,96 @@ public class RegisterIntegrationTests(IntegrationTestFactory factory) : IClassFi
 
         System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
         System.IdentityModel.Tokens.Jwt.JwtSecurityToken jwtToken = tokenHandler.ReadJwtToken(loginResult.Token);
-        string? areaClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "areaId")?.Value;
-        string? areaNameClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "areaName")?.Value;
         string? shiftClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "shiftId")?.Value;
         string? shiftNameClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "shiftName")?.Value;
-
-        Assert.Equal("1", areaClaim);
-        Assert.Equal("Zona Norte", areaNameClaim);
+        List<string> areaClaims = jwtToken.Claims.Where(c => c.Type == "areaId").Select(c => c.Value).ToList();
+        List<string> areaNameClaims = jwtToken.Claims.Where(c => c.Type == "areaName").Select(c => c.Value).ToList();
+        Assert.Contains("1", areaClaims);
+        Assert.Contains("2", areaClaims);
+        Assert.Contains("Zona Norte", areaNameClaims);
+        Assert.Contains("Línea 3", areaNameClaims);
         Assert.Equal("1", shiftClaim);
         Assert.Equal("Turno mañana", shiftNameClaim);
+    }
+
+    [Fact]
+    public async Task Register_TechnicianWithValidSpeciality_ReturnsCreated()
+    {
+        // Arrange
+        RegisterCommand command = new RegisterCommand
+        {
+            FirstName = "Jane",
+            LastName = "Doe",
+            Password = "TechPassword123!",
+            Email = "tech@opscore.com",
+            Role = "Technician",
+            AreaIds = new List<int> { 1 },
+            ShiftId = 1,
+            SpecialityId = 1
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/authentication/register", command);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<RegisterResponse>();
+        Assert.NotNull(result);
+        Assert.Equal(1, result.SpecialityId);
+    }
+
+    [Fact]
+    public async Task Register_TechnicianWithoutSpeciality_ReturnsBadRequest()
+    {
+        // Arrange
+        RegisterCommand command = new RegisterCommand
+        {
+            FirstName = "Jane",
+            LastName = "Doe",
+            Password = "TechPassword123!",
+            Email = "technospec@opscore.com",
+            Role = "Technician",
+            AreaIds = new List<int> { 1 },
+            ShiftId = 1,
+            SpecialityId = null
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/authentication/register", command);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+        Assert.NotNull(problem);
+        Assert.Contains("SpecialityId", problem.Errors.Keys);
+        Assert.Equal("Speciality is required for technicians.", problem.Errors["SpecialityId"][0]);
+    }
+
+    [Fact]
+    public async Task Register_WithInvalidSpecialityId_ReturnsBadRequest()
+    {
+        // Arrange
+        RegisterCommand command = new RegisterCommand
+        {
+            FirstName = "Jane",
+            LastName = "Doe",
+            Password = "TechPassword123!",
+            Email = "techbadspec@opscore.com",
+            Role = "Technician",
+            AreaIds = new List<int> { 1 },
+            ShiftId = 1,
+            SpecialityId = 999
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/authentication/register", command);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+        Assert.NotNull(problem);
+        Assert.Contains("SpecialityId", problem.Errors.Keys);
+        Assert.Equal("Speciality must exist and be active.", problem.Errors["SpecialityId"][0]);
     }
 
     private class LoginResponse
@@ -230,7 +311,8 @@ public class RegisterIntegrationTests(IntegrationTestFactory factory) : IClassFi
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public string EmployeeId { get; set; } = string.Empty;
-        public int? AreaId { get; set; }
+        public List<int> AreaIds { get; set; } = new();
         public int? ShiftId { get; set; }
+        public int? SpecialityId { get; set; }
     }
 }

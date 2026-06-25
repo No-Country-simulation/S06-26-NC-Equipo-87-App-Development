@@ -11,6 +11,7 @@ interface TextAreaProps extends TextInputProps {
   maxCharacters?: number;
   value: string;
   fillHeight?: boolean;
+  required?: boolean;
 }
 
 export const TextArea: React.FC<TextAreaProps> = ({
@@ -20,6 +21,7 @@ export const TextArea: React.FC<TextAreaProps> = ({
   maxCharacters = 500,
   value,
   fillHeight = false,
+  required = false,
   ...props
 }) => {
   const hasError = !!errorMessage;
@@ -34,6 +36,11 @@ export const TextArea: React.FC<TextAreaProps> = ({
     <View style={[styles.container, fillHeight && styles.containerFill]}>
       <Typography variant="micro" color={labelColor} style={styles.label}>
         {label}
+        {required && (
+          <Typography variant="micro" color={designTokens.colors['status-open']}>
+            {' *'}
+          </Typography>
+        )}
       </Typography>
 
       <View

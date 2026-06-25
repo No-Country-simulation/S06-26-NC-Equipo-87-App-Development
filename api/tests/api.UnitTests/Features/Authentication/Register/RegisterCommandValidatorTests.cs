@@ -20,6 +20,7 @@ public class RegisterCommandValidatorTests
         // Seed some defaults
         _dbContext.Areas.Add(new api.Features.Lookups.Common.Area { Id = 1, Name = "Zona Norte", Status = "Active" });
         _dbContext.Shifts.Add(new api.Features.Lookups.Common.Shift { Id = 1, Name = "Turno mañana", Status = "Active" });
+        _dbContext.Specialities.Add(new api.Features.Lookups.Common.Speciality { Id = 1, Name = "Mecanico", Status = "Active" });
         _dbContext.SaveChanges();
 
         _validator = new RegisterCommandValidator(_dbContext);
@@ -35,7 +36,7 @@ public class RegisterCommandValidatorTests
             Email = "john.doe@example.com",
             Password = "Password123!",
             Role = "Operator",
-            AreaId = 1,
+            AreaIds = new List<int> { 1 },
             ShiftId = 1
         };
 
@@ -54,7 +55,7 @@ public class RegisterCommandValidatorTests
             Email = "john.doe@example.com",
             Password = "Password123!",
             Role = "Operator",
-            AreaId = 1,
+            AreaIds = new List<int> { 1 },
             ShiftId = 1
         };
 
@@ -74,7 +75,7 @@ public class RegisterCommandValidatorTests
             Email = "john.doe@example.com",
             Password = "Password123!",
             Role = "Operator",
-            AreaId = 1,
+            AreaIds = new List<int> { 1 },
             ShiftId = 1
         };
 
@@ -94,7 +95,7 @@ public class RegisterCommandValidatorTests
             Email = "john.doe@example.com",
             Password = "Password123!",
             Role = "Operator",
-            AreaId = 1,
+            AreaIds = new List<int> { 1 },
             ShiftId = 1
         };
 
@@ -114,7 +115,7 @@ public class RegisterCommandValidatorTests
             Email = "john.doe@example.com",
             Password = "Password123!",
             Role = "Operator",
-            AreaId = 1,
+            AreaIds = new List<int> { 1 },
             ShiftId = 1
         };
 
@@ -134,7 +135,7 @@ public class RegisterCommandValidatorTests
             Email = new string('a', 90) + "@example.com",
             Password = "Password123!",
             Role = "Operator",
-            AreaId = 1,
+            AreaIds = new List<int> { 1 },
             ShiftId = 1
         };
 
@@ -154,7 +155,7 @@ public class RegisterCommandValidatorTests
             Email = "john.doe@example.com",
             Password = "Password123!",
             Role = "InvalidRole",
-            AreaId = 1,
+            AreaIds = new List<int> { 1 },
             ShiftId = 1
         };
 
@@ -180,7 +181,7 @@ public class RegisterCommandValidatorTests
             Email = "john.doe@example.com",
             Password = password,
             Role = "Operator",
-            AreaId = 1,
+            AreaIds = new List<int> { 1 },
             ShiftId = 1
         };
 
@@ -195,5 +196,67 @@ public class RegisterCommandValidatorTests
             Assert.False(result.IsValid);
             Assert.Contains(result.Errors, e => e.PropertyName == "Password");
         }
+    }
+
+    [Fact]
+    public async Task Validate_TechnicianWithValidSpeciality_ReturnsTrue()
+    {
+        RegisterCommand command = new RegisterCommand
+        {
+            FirstName = "John",
+            LastName = "Doe",
+            Email = "john.doe@example.com",
+            Password = "Password123!",
+            Role = "Technician",
+            AreaIds = new List<int> { 1 },
+            ShiftId = 1,
+            SpecialityId = 1
+        };
+
+        var result = await _validator.ValidateAsync(command);
+
+        Assert.True(result.IsValid);
+    }
+
+    [Fact]
+    public async Task Validate_TechnicianWithoutSpeciality_ReturnsFalse()
+    {
+        RegisterCommand command = new RegisterCommand
+        {
+            FirstName = "John",
+            LastName = "Doe",
+            Email = "john.doe@example.com",
+            Password = "Password123!",
+            Role = "Technician",
+            AreaIds = new List<int> { 1 },
+            ShiftId = 1,
+            SpecialityId = null
+        };
+
+        var result = await _validator.ValidateAsync(command);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.PropertyName == "SpecialityId" && e.ErrorMessage.Contains("required for technicians"));
+    }
+
+    [Fact]
+    public async Task Validate_AnyRoleWithInvalidSpeciality_ReturnsFalse()
+    {
+        RegisterCommand command = new RegisterCommand
+        {
+            FirstName = "John",
+            LastName = "Doe",
+            Email = "john.doe@example.com",
+            Password = "Password123!",
+            Role = "Operator",
+            AreaIds = new List<int> { 1 },
+            ShiftId = 1,
+            SpecialityId = 999
+        };
+
+        var result = await _validator.ValidateAsync(command);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.PropertyName == "SpecialityId" && e.ErrorMessage.Contains("must exist and be active"));
     }
 }

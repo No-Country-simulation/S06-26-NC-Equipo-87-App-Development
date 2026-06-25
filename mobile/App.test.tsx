@@ -3,10 +3,10 @@ import renderer from 'react-test-renderer';
 import App from './App';
 import { getToken } from './src/shared/auth/tokenService';
 import { postRequest } from './src/shared/api/apiClient';
-import { OperatorHomeScreen } from './src/features/incidents/screens/OperatorHomeScreen';
-import { NewIncidentStep1Screen } from './src/features/incidents/screens/NewIncidentStep1Screen';
-import { NewIncidentStep2Screen } from './src/features/incidents/screens/NewIncidentStep2Screen';
-import { IncidentDetailScreen } from './src/features/incidents/screens/IncidentDetailScreen';
+import { OperatorDashboardScreen } from './src/features/operator/screens/OperatorDashboardScreen';
+import { OperatorNewIncidentStep1Screen } from './src/features/operator/screens/OperatorNewIncidentStep1Screen';
+import { OperatorNewIncidentStep2Screen } from './src/features/operator/screens/OperatorNewIncidentStep2Screen';
+import { OperatorTicketDetailScreen } from './src/features/operator/screens/OperatorTicketDetailScreen';
 
 jest.mock('expo-secure-store', () => {
   return {
@@ -39,35 +39,35 @@ jest.mock('./src/features/auth/LoginScreen', () => {
   };
 });
 
-jest.mock('./src/features/incidents/screens/OperatorHomeScreen', () => {
+jest.mock('./src/features/operator/screens/OperatorDashboardScreen', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const ReactMock = require('react');
   return {
-    OperatorHomeScreen: (props: Record<string, unknown>) => ReactMock.createElement('OperatorHomeScreen', props),
+    OperatorDashboardScreen: (props: Record<string, unknown>) => ReactMock.createElement('OperatorDashboardScreen', props),
   };
 });
 
-jest.mock('./src/features/incidents/screens/NewIncidentStep1Screen', () => {
+jest.mock('./src/features/operator/screens/OperatorNewIncidentStep1Screen', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const ReactMock = require('react');
   return {
-    NewIncidentStep1Screen: (props: Record<string, unknown>) => ReactMock.createElement('NewIncidentStep1Screen', props),
+    OperatorNewIncidentStep1Screen: (props: Record<string, unknown>) => ReactMock.createElement('OperatorNewIncidentStep1Screen', props),
   };
 });
 
-jest.mock('./src/features/incidents/screens/NewIncidentStep2Screen', () => {
+jest.mock('./src/features/operator/screens/OperatorNewIncidentStep2Screen', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const ReactMock = require('react');
   return {
-    NewIncidentStep2Screen: (props: Record<string, unknown>) => ReactMock.createElement('NewIncidentStep2Screen', props),
+    OperatorNewIncidentStep2Screen: (props: Record<string, unknown>) => ReactMock.createElement('OperatorNewIncidentStep2Screen', props),
   };
 });
 
-jest.mock('./src/features/incidents/screens/IncidentDetailScreen', () => {
+jest.mock('./src/features/operator/screens/OperatorTicketDetailScreen', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const ReactMock = require('react');
   return {
-    IncidentDetailScreen: (props: Record<string, unknown>) => ReactMock.createElement('IncidentDetailScreen', props),
+    OperatorTicketDetailScreen: (props: Record<string, unknown>) => ReactMock.createElement('OperatorTicketDetailScreen', props),
   };
 });
 
@@ -111,27 +111,27 @@ describe('<App />', () => {
     });
 
     // Assert initially on home screen
-    expect(renderResult!.root.findByType(OperatorHomeScreen)).toBeTruthy();
+    expect(renderResult!.root.findByType(OperatorDashboardScreen)).toBeTruthy();
 
     // Act - trigger report press
     await act(async () => {
-      renderResult!.root.findByType(OperatorHomeScreen).props.onReportPress();
+      renderResult!.root.findByType(OperatorDashboardScreen).props.onReportPress();
     });
 
     // Assert on step 1 screen
-    expect(renderResult!.root.findByType(NewIncidentStep1Screen)).toBeTruthy();
+    expect(renderResult!.root.findByType(OperatorNewIncidentStep1Screen)).toBeTruthy();
 
     // Act - trigger step 1 next
     await act(async () => {
-      renderResult!.root.findByType(NewIncidentStep1Screen).props.onNext(1, 2, 3);
+      renderResult!.root.findByType(OperatorNewIncidentStep1Screen).props.onNext(1, 2, 3);
     });
 
     // Assert on step 2 screen
-    expect(renderResult!.root.findByType(NewIncidentStep2Screen)).toBeTruthy();
+    expect(renderResult!.root.findByType(OperatorNewIncidentStep2Screen)).toBeTruthy();
 
     // Act - trigger step 2 submit
     await act(async () => {
-      await renderResult!.root.findByType(NewIncidentStep2Screen).props.onSubmit('Leaking pipe');
+      await renderResult!.root.findByType(OperatorNewIncidentStep2Screen).props.onSubmit('Leaking pipe');
     });
 
     // Assert calls postRequest with correct params
@@ -143,7 +143,7 @@ describe('<App />', () => {
     }));
 
     // Assert on detail screen with the correct incidentId
-    const detailScreen = renderResult!.root.findByType(IncidentDetailScreen);
+    const detailScreen = renderResult!.root.findByType(OperatorTicketDetailScreen);
     expect(detailScreen).toBeTruthy();
     expect(detailScreen.props.incidentId).toBe(createdIncidentId);
   });

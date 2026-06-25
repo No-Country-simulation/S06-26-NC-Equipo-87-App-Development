@@ -11,13 +11,20 @@ import {
   IBMPlexMono_500Medium 
 } from '@expo-google-fonts/ibm-plex-mono';
 import { LoginScreen } from './src/features/auth/LoginScreen';
-import { OperatorHomeScreen } from './src/features/incidents/screens/OperatorHomeScreen';
-import { NewIncidentStep1Screen } from './src/features/incidents/screens/NewIncidentStep1Screen';
-import { NewIncidentStep2Screen } from './src/features/incidents/screens/NewIncidentStep2Screen';
-import { IncidentDetailScreen } from './src/features/incidents/screens/IncidentDetailScreen';
-import { getToken } from './src/shared/auth/tokenService';
-import { postRequest } from './src/shared/api/apiClient';
+import { OperatorDashboardScreen } from './src/features/operator/screens/OperatorDashboardScreen';
+import { OperatorNewIncidentStep1Screen } from './src/features/operator/screens/OperatorNewIncidentStep1Screen';
+import { OperatorNewIncidentStep2Screen } from './src/features/operator/screens/OperatorNewIncidentStep2Screen';
+import { OperatorTicketDetailScreen } from './src/features/operator/screens/OperatorTicketDetailScreen';
+import { SupervisorDashboardScreen } from './src/features/supervisor/screens/SupervisorDashboardScreen';
+import { SupervisorTicketDetailScreen } from './src/features/supervisor/screens/SupervisorTicketDetailScreen';
+import { TechnicianDashboardScreen } from './src/features/technician/screens/TechnicianDashboardScreen';
+import { TechnicianTicketDetailScreen } from './src/features/technician/screens/TechnicianTicketDetailScreen';
+import { TechnicianCloseTicketScreen } from './src/features/technician/screens/TechnicianCloseTicketScreen';
+import { useAuthStore } from './src/features/auth/stores/useAuthStore';
+import { useIncidentStore } from './src/features/incidents/stores/useIncidentStore';
 import designTokens from './src/shared/theme/designTokens.json';
+
+import { decodeJwt } from './src/shared/auth/jwtDecoder';
 
 interface IncidentFormState {
   areaId: number;
@@ -33,28 +40,50 @@ export default function App() {
     'IBMPlexMono-Medium': IBMPlexMono_500Medium,
   });
 
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [currentScreen, setCurrentScreen] = useState<'home' | 'new-incident-step1' | 'new-incident-step2' | 'incident-detail'>('home');
+  const { token, loading, verifySession, logout } = useAuthStore();
+  const createIncident = useIncidentStore((state) => state.createIncident);
+  const [currentScreen, setCurrentScreen] = useState<'home' | 'new-incident-step1' | 'new-incident-step2' | 'incident-detail' | 'supervisor-dashboard' | 'supervisor-ticket-detail' | 'technician-dashboard' | 'technician-ticket-detail' | 'technician-close-ticket'>('home');
   const [newIncidentForm, setNewIncidentForm] = useState<IncidentFormState | null>(null);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
 
+  const getInitialScreenForToken = (tokenStr: string | null): 'home' | 'supervisor-dashboard' | 'technician-dashboard' => {
+    if (!tokenStr) return 'home';
+    try {
+      const decoded = decodeJwt(tokenStr);
+      if (decoded) {
+        const role = decoded['role'] || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+        if (role === 'Supervisor') {
+          return 'supervisor-dashboard';
+        }
+        if (role === 'Technician') {
+          return 'technician-dashboard';
+        }
+      }
+    } catch {
+      // fallback to home
+    }
+    return 'home';
+  };
+
   useEffect(() => {
     const checkToken = async () => {
-      try {
-        const cachedToken = await getToken();
-        setToken(cachedToken);
-      } catch {
-        setToken(null);
-      } finally {
-        setLoading(false);
+      const cachedToken = await verifySession();
+      if (cachedToken) {
+        setCurrentScreen(getInitialScreenForToken(cachedToken));
+      } else {
+        setCurrentScreen('home');
       }
     };
     checkToken();
-  }, []);
+  }, [verifySession]);
 
   const handleLoginSuccess = (newToken: string) => {
-    setToken(newToken);
+    setCurrentScreen(getInitialScreenForToken(newToken));
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    setCurrentScreen('home');
   };
 
   const handleReportPress = () => {
@@ -84,13 +113,7 @@ export default function App() {
 
   const handleStep2Submit = async (description: string) => {
     try {
-      const response = await postRequest<{
-        AreaId: number | undefined;
-        IncidentTypeId: number | undefined;
-        SeverityTypeId: number | undefined;
-        Description: string;
-        DeviceTimestamp: string;
-      }, { incidentId: string }>('/api/incidents', {
+      const response = await createIncident({
         AreaId: newIncidentForm?.areaId,
         IncidentTypeId: newIncidentForm?.incidentTypeId,
         SeverityTypeId: newIncidentForm?.severityTypeId,
@@ -130,7 +153,7 @@ export default function App() {
     if (currentScreen === 'new-incident-step1') {
       return (
         <>
-          <NewIncidentStep1Screen
+          <OperatorNewIncidentStep1Screen
             onBack={handleStep1Back}
             onClose={handleStep1Close}
             onNext={handleStep1Next}
@@ -143,7 +166,7 @@ export default function App() {
     if (currentScreen === 'new-incident-step2') {
       return (
         <>
-          <NewIncidentStep2Screen
+          <OperatorNewIncidentStep2Screen
             onBack={handleStep2Back}
             onClose={handleStep2Close}
             onSubmit={handleStep2Submit}
@@ -156,7 +179,7 @@ export default function App() {
     if (currentScreen === 'incident-detail') {
       return (
         <>
-          <IncidentDetailScreen
+          <OperatorTicketDetailScreen
             incidentId={selectedIncidentId || ''}
             onBack={() => setCurrentScreen('home')}
             onClose={() => setCurrentScreen('home')}
@@ -166,11 +189,89 @@ export default function App() {
       );
     }
 
+    if (currentScreen === 'supervisor-dashboard') {
+      return (
+        <>
+          <SupervisorDashboardScreen
+            onTicketPress={(id) => {
+              setSelectedIncidentId(id);
+              setCurrentScreen('supervisor-ticket-detail');
+            }}
+            onMenuPress={() => {}}
+            onLogout={handleLogout}
+          />
+          <StatusBar style="light" />
+        </>
+      );
+    }
+
+    if (currentScreen === 'supervisor-ticket-detail') {
+      return (
+        <>
+          <SupervisorTicketDetailScreen
+            ticketId={selectedIncidentId || ''}
+            onBack={() => setCurrentScreen('supervisor-dashboard')}
+            onClose={() => setCurrentScreen('supervisor-dashboard')}
+          />
+          <StatusBar style="light" />
+        </>
+      );
+    }
+
+    if (currentScreen === 'technician-dashboard') {
+      return (
+        <>
+          <TechnicianDashboardScreen
+            onTicketPress={(id) => {
+              setSelectedIncidentId(id);
+              setCurrentScreen('technician-ticket-detail');
+            }}
+            onLogout={handleLogout}
+          />
+          <StatusBar style="light" />
+        </>
+      );
+    }
+
+    if (currentScreen === 'technician-ticket-detail') {
+      return (
+        <>
+          <TechnicianTicketDetailScreen
+            ticketId={selectedIncidentId || ''}
+            onBack={() => setCurrentScreen('technician-dashboard')}
+            onResolve={() => {
+              setCurrentScreen('technician-close-ticket');
+            }}
+          />
+          <StatusBar style="light" />
+        </>
+      );
+    }
+
+    if (currentScreen === 'technician-close-ticket') {
+      return (
+        <>
+          <TechnicianCloseTicketScreen
+            ticketId={selectedIncidentId || ''}
+            onBack={() => setCurrentScreen('technician-ticket-detail')}
+            onCloseTicket={() => {
+              setCurrentScreen('technician-dashboard');
+            }}
+          />
+          <StatusBar style="light" />
+        </>
+      );
+    }
+
     return (
       <>
-        <OperatorHomeScreen 
+        <OperatorDashboardScreen 
           onReportPress={handleReportPress} 
-          onLogout={() => setToken(null)} 
+          onLogout={handleLogout} 
+          onIncidentPress={(id) => {
+            setSelectedIncidentId(id);
+            setCurrentScreen('incident-detail');
+          }}
         />
         <StatusBar style="light" />
       </>

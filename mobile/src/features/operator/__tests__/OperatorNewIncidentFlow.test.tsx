@@ -1,19 +1,25 @@
 import React, { act } from 'react';
 import renderer from 'react-test-renderer';
 import { ActivityIndicator } from 'react-native';
-import { NewIncidentStep1Screen } from '../screens/NewIncidentStep1Screen';
+import { OperatorNewIncidentStep1Screen } from '../screens/OperatorNewIncidentStep1Screen';
+import { OperatorNewIncidentStep2Screen } from '../screens/OperatorNewIncidentStep2Screen';
 import { getRequest } from '../../../shared/api/apiClient';
 import { Chip } from '../../../shared/components/atoms/Chip';
 import { IncidentTypeCard } from '../../../shared/components/molecules/IncidentTypeCard';
 import { SeverityButton } from '../../../shared/components/molecules/SeverityButton';
 import { Button } from '../../../shared/components/atoms/Button';
 import { Typography } from '../../../shared/components/atoms/Typography';
+import { TextArea } from '../../../shared/components/molecules/TextArea';
 
 jest.mock('../../../shared/api/apiClient', () => ({
   getRequest: jest.fn(),
 }));
 
-describe('<NewIncidentStep1Screen />', () => {
+jest.mock('react-native-safe-area-context', () => ({
+  SafeAreaView: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+describe('<OperatorNewIncidentStep1Screen />', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -26,7 +32,7 @@ describe('<NewIncidentStep1Screen />', () => {
     // Act
     await act(async () => {
       renderResult = renderer.create(
-        <NewIncidentStep1Screen onBack={jest.fn()} onClose={jest.fn()} onNext={jest.fn()} />
+        <OperatorNewIncidentStep1Screen onBack={jest.fn()} onClose={jest.fn()} onNext={jest.fn()} />
       );
     });
 
@@ -61,7 +67,7 @@ describe('<NewIncidentStep1Screen />', () => {
     // Act
     await act(async () => {
       renderResult = renderer.create(
-        <NewIncidentStep1Screen onBack={jest.fn()} onClose={jest.fn()} onNext={onNextMock} />
+        <OperatorNewIncidentStep1Screen onBack={jest.fn()} onClose={jest.fn()} onNext={onNextMock} />
       );
     });
 
@@ -109,7 +115,7 @@ describe('<NewIncidentStep1Screen />', () => {
     // Act
     await act(async () => {
       renderResult = renderer.create(
-        <NewIncidentStep1Screen onBack={jest.fn()} onClose={jest.fn()} onNext={jest.fn()} />
+        <OperatorNewIncidentStep1Screen onBack={jest.fn()} onClose={jest.fn()} onNext={jest.fn()} />
       );
     });
 
@@ -133,5 +139,94 @@ describe('<NewIncidentStep1Screen />', () => {
     const chips = renderResult!.root.findAllByType(Chip);
     expect(chips.length).toBe(1);
     expect(chips[0].props.label).toBe('Area 1');
+  });
+});
+
+describe('<OperatorNewIncidentStep2Screen />', () => {
+  it('renders correctly without initial errors', async () => {
+    // Arrange & Act
+    let component: renderer.ReactTestRenderer | null = null;
+    await act(async () => {
+      component = renderer.create(
+        <OperatorNewIncidentStep2Screen onBack={jest.fn()} onClose={jest.fn()} onSubmit={jest.fn()} />
+      );
+    });
+
+    // Assert
+    const textArea = component!.root.findByType(TextArea);
+    expect(textArea.props.value).toBe('');
+    expect(textArea.props.errorMessage).toBeUndefined();
+  });
+
+  it('shows error when submitting empty description', async () => {
+    // Arrange
+    let component: renderer.ReactTestRenderer | null = null;
+    await act(async () => {
+      component = renderer.create(
+        <OperatorNewIncidentStep2Screen onBack={jest.fn()} onClose={jest.fn()} onSubmit={jest.fn()} />
+      );
+    });
+    const button = component!.root.findByType(Button);
+
+    // Act
+    await act(async () => {
+      button.props.onPress();
+    });
+
+    // Assert
+    const textArea = component!.root.findByType(TextArea);
+    expect(textArea.props.errorMessage).toBe('La descripción es obligatoria para reportar.');
+  });
+
+  it('shows error when description is too short', async () => {
+    // Arrange
+    let component: renderer.ReactTestRenderer | null = null;
+    await act(async () => {
+      component = renderer.create(
+        <OperatorNewIncidentStep2Screen onBack={jest.fn()} onClose={jest.fn()} onSubmit={jest.fn()} />
+      );
+    });
+    const textArea = component!.root.findByType(TextArea);
+    const button = component!.root.findByType(Button);
+
+    // Act 1: type a short message
+    await act(async () => {
+      textArea.props.onChangeText('Short message');
+    });
+
+    // Act 2: submit
+    await act(async () => {
+      button.props.onPress();
+    });
+
+    // Assert
+    expect(textArea.props.errorMessage).toBe('Ingresa al menos 20 caracteres.');
+  });
+
+  it('calls onSubmit when valid description is submitted', async () => {
+    // Arrange
+    const onSubmitMock = jest.fn();
+    let component: renderer.ReactTestRenderer | null = null;
+    await act(async () => {
+      component = renderer.create(
+        <OperatorNewIncidentStep2Screen onBack={jest.fn()} onClose={jest.fn()} onSubmit={onSubmitMock} />
+      );
+    });
+    const textArea = component!.root.findByType(TextArea);
+    const button = component!.root.findByType(Button);
+
+    // Act 1: type a valid message (>= 20 chars)
+    await act(async () => {
+      textArea.props.onChangeText('This is a sufficiently long incident description.');
+    });
+
+    // Act 2: submit
+    await act(async () => {
+      button.props.onPress();
+    });
+
+    // Assert
+    expect(textArea.props.errorMessage).toBeUndefined();
+    expect(onSubmitMock).toHaveBeenCalledWith('This is a sufficiently long incident description.');
   });
 });

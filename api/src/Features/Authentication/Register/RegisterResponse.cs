@@ -10,6 +10,7 @@ public class RegisterResponse
     public string LastName { get; set; } = string.Empty;
     public string EmployeeId { get; set; } = string.Empty;
     public string Pin { get; set; } = string.Empty;
-    public int? AreaId { get; set; }
+    public List<int> AreaIds { get; set; } = new();
     public int? ShiftId { get; set; }
+    public int? SpecialityId { get; set; }
 }

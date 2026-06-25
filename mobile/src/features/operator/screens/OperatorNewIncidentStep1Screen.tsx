@@ -12,16 +12,10 @@ import { WrenchIcon } from '../../../shared/components/atoms/Icons/WrenchIcon';
 import { WarningIcon } from '../../../shared/components/atoms/Icons/WarningIcon';
 import { QualityIcon } from '../../../shared/components/atoms/Icons/QualityIcon';
 import { PlusIcon } from '../../../shared/components/atoms/Icons/PlusIcon';
-import { getRequest } from '../../../shared/api/apiClient';
+import { useLookupStore } from '../../incidents/stores/useLookupStore';
 import designTokens from '../../../shared/theme/designTokens.json';
 
-interface LookupItem {
-  id: number;
-  name: string;
-  status: string;
-}
-
-interface NewIncidentStep1ScreenProps {
+interface OperatorNewIncidentStep1ScreenProps {
   onBack: () => void;
   onClose: () => void;
   onNext: (areaId: number, incidentTypeId: number, severityTypeId: number) => void;
@@ -35,14 +29,12 @@ const resolveIncidentTypeIcon = (name: string): React.ReactElement => {
   return <PlusIcon />;
 };
 
-export const NewIncidentStep1Screen: React.FC<NewIncidentStep1ScreenProps> = ({
+export const OperatorNewIncidentStep1Screen: React.FC<OperatorNewIncidentStep1ScreenProps> = ({
   onBack,
   onClose,
   onNext,
 }) => {
-  const [areas, setAreas] = useState<LookupItem[]>([]);
-  const [types, setTypes] = useState<LookupItem[]>([]);
-  const [severities, setSeverities] = useState<LookupItem[]>([]);
+  const { areas, types, severities, fetchActiveLookups } = useLookupStore();
 
   const [selectedAreaId, setSelectedAreaId] = useState<number | null>(null);
   const [selectedTypeId, setSelectedTypeId] = useState<number | null>(null);
@@ -55,29 +47,29 @@ export const NewIncidentStep1Screen: React.FC<NewIncidentStep1ScreenProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const [fetchedAreas, fetchedTypes, fetchedSeverities] = await Promise.all([
-        getRequest<LookupItem[]>('/api/areas'),
-        getRequest<LookupItem[]>('/api/incidents/types'),
-        getRequest<LookupItem[]>('/api/incidents/severities'),
-      ]);
-
-      setAreas(fetchedAreas);
-      setTypes(fetchedTypes);
-      setSeverities(fetchedSeverities);
-
-      if (fetchedAreas.length > 0) setSelectedAreaId(fetchedAreas[0].id);
-      if (fetchedTypes.length > 0) setSelectedTypeId(fetchedTypes[0].id);
-      if (fetchedSeverities.length > 0) setSelectedSeverityId(fetchedSeverities[0].id);
+      await fetchActiveLookups();
     } catch (err: unknown) {
       setError((err as Error)?.message || 'Error al cargar los datos de configuración.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchActiveLookups]);
 
   useEffect(() => {
     fetchLookups();
   }, [fetchLookups]);
+
+  useEffect(() => {
+    if (areas.length > 0 && selectedAreaId === null) {
+      setSelectedAreaId(areas[0].id);
+    }
+    if (types.length > 0 && selectedTypeId === null) {
+      setSelectedTypeId(types[0].id);
+    }
+    if (severities.length > 0 && selectedSeverityId === null) {
+      setSelectedSeverityId(severities[0].id);
+    }
+  }, [areas, types, severities, selectedAreaId, selectedTypeId, selectedSeverityId]);
 
   const canProceed =
     selectedAreaId !== null && selectedTypeId !== null && selectedSeverityId !== null;

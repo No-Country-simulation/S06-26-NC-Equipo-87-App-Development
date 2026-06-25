@@ -7,10 +7,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace api.Features.Incidents.Create;
 
-public class CreateIncidentHandler(AppDbContext dbContext, IHttpContextAccessor httpContextAccessor)
+public class CreateIncidentHandler(AppDbContext dbContext, IHttpContextAccessor httpContextAccessor, IIncidentEventPublisher eventPublisher)
 {
     private readonly AppDbContext _dbContext = dbContext;
     private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
+    private readonly IIncidentEventPublisher _eventPublisher = eventPublisher;
     private static readonly SemaphoreSlim _semaphore = new(1, 1);
 
     public async Task<CreateIncidentResult> HandleAsync(CreateIncidentCommand command)
@@ -65,6 +66,15 @@ public class CreateIncidentHandler(AppDbContext dbContext, IHttpContextAccessor 
             _dbContext.Incidents.Add(incident);
             _dbContext.IncidentStatusHistories.Add(history);
             await _dbContext.SaveChangesAsync();
+
+            await _eventPublisher.PublishIncidentCreatedAsync(new IncidentCreatedEvent(
+                incident.IncidentId,
+                incident.Description,
+                incident.AreaId,
+                incident.IncidentTypeId,
+                incident.SeverityTypeId,
+                incident.Status
+            ));
 
             return new CreateIncidentResult
             {

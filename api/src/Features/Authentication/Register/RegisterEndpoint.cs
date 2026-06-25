@@ -68,8 +68,9 @@ public class RegisterEndpoint(RegisterHandler handler, IValidator<RegisterComman
             LastName = result.LastName ?? string.Empty,
             EmployeeId = result.EmployeeId ?? string.Empty,
             Pin = result.Pin ?? string.Empty,
-            AreaId = result.AreaId,
-            ShiftId = result.ShiftId
+            AreaIds = result.AreaIds,
+            ShiftId = result.ShiftId,
+            SpecialityId = result.SpecialityId
         });
     }
 }

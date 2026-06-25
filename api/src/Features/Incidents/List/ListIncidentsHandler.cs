@@ -1,23 +1,51 @@
+using System.Security.Claims;
+
 using api.Data;
 
 using Microsoft.EntityFrameworkCore;
 
 namespace api.Features.Incidents.List;
 
-public class ListIncidentsHandler(AppDbContext dbContext)
+public class ListIncidentsHandler(AppDbContext dbContext, IHttpContextAccessor httpContextAccessor)
 {
     private readonly AppDbContext _dbContext = dbContext;
+    private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
 
     public async Task<List<IncidentListItemResponse>> HandleAsync(ListIncidentsQuery query)
     {
         var incidentsQuery = _dbContext.Incidents.AsQueryable();
 
-        if (!string.IsNullOrEmpty(query.ReportedByUserId))
+        HttpContext? httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext?.User?.Identity?.IsAuthenticated == true)
         {
-            incidentsQuery = incidentsQuery.Where(i => i.StatusHistories
-                .OrderBy(h => h.ChangedDate)
-                .Select(h => h.ChangedByUserId)
-                .FirstOrDefault() == query.ReportedByUserId);
+            string? userId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                if (httpContext.User.IsInRole("Operator"))
+                {
+                    incidentsQuery = incidentsQuery.Where(i => i.StatusHistories
+                        .OrderBy(h => h.ChangedDate)
+                        .Select(h => h.ChangedByUserId)
+                        .FirstOrDefault() == userId);
+                }
+                else if (httpContext.User.IsInRole("Supervisor"))
+                {
+                    var userAreaIds = await _dbContext.UserAreas
+                        .Where(ua => ua.UserId == userId)
+                        .Select(ua => ua.AreaId)
+                        .ToListAsync();
+
+                    incidentsQuery = incidentsQuery.Where(i => userAreaIds.Contains(i.AreaId));
+                }
+                else if (httpContext.User.IsInRole("Technician"))
+                {
+                    incidentsQuery = incidentsQuery.Where(i => i.AssignedToUserId == userId);
+                }
+                else if (httpContext.User.IsInRole("Plant Manager"))
+                {
+                    // No filter (returns all incidents)
+                }
+            }
         }
 
         if (query.Since.HasValue)
@@ -53,3 +81,4 @@ public class ListIncidentsHandler(AppDbContext dbContext)
             .ToListAsync();
     }
 }
+

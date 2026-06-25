@@ -8,14 +8,14 @@ import { OfflineBanner } from '../../../shared/components/molecules/OfflineBanne
 import { NavigationHeader } from '../../../shared/components/molecules/NavigationHeader';
 import designTokens from '../../../shared/theme/designTokens.json';
 
-interface NewIncidentStep2ScreenProps {
+interface OperatorNewIncidentStep2ScreenProps {
   onBack: () => void;
   onClose: () => void;
   onSubmit: (description: string) => void;
   isOffline?: boolean;
 }
 
-export const NewIncidentStep2Screen: React.FC<NewIncidentStep2ScreenProps> = ({
+export const OperatorNewIncidentStep2Screen: React.FC<OperatorNewIncidentStep2ScreenProps> = ({
   onBack,
   onClose,
   onSubmit,
@@ -25,11 +25,21 @@ export const NewIncidentStep2Screen: React.FC<NewIncidentStep2ScreenProps> = ({
   const [submitted, setSubmitted] = useState(false);
 
   const isEmpty = description.trim().length === 0;
-  const showError = submitted && isEmpty;
+  const isTooShort = !isEmpty && description.trim().length < 20;
+  const isTooLong = description.trim().length > 500;
+  const showError = submitted && (isEmpty || isTooShort || isTooLong);
+
+  const getErrorMessage = () => {
+    if (!showError) return undefined;
+    if (isEmpty) return 'La descripción es obligatoria para reportar.';
+    if (isTooShort) return 'Ingresa al menos 20 caracteres.';
+    if (isTooLong) return 'La descripción no puede superar los 500 caracteres.';
+    return undefined;
+  };
 
   const handleSubmit = () => {
     setSubmitted(true);
-    if (!isEmpty) {
+    if (!isEmpty && !isTooShort && !isTooLong) {
       onSubmit(description);
     }
   };
@@ -51,7 +61,7 @@ export const NewIncidentStep2Screen: React.FC<NewIncidentStep2ScreenProps> = ({
           helperText="Describe brevemente qué sucedió y dónde"
           value={description}
           onChangeText={setDescription}
-          errorMessage={showError ? 'La descripción es obligatoria para reportar.' : undefined}
+          errorMessage={getErrorMessage()}
           fillHeight
         />
       </View>

@@ -12,6 +12,8 @@
     "border-dark": "#3D4147",
     "status-open": "#E24B4A",
     "status-open-badge-text": "#791F1F",
+    "status-assigned": "#378ADD",
+    "status-assigned-badge-text": "#0C447C",
     "status-in-progress": "#BA7517",
     "status-in-progress-badge-text": "#633806",
     "status-closed": "#1D9E75",
@@ -93,6 +95,11 @@
     "status-badge-open": {
       "background": "#E24B4A",
       "textColor": "#791F1F",
+      "borderRadius": "4px"
+    },
+    "status-badge-assigned": {
+      "background": "#E6F1FB",
+      "textColor": "#0C447C",
       "borderRadius": "4px"
     },
     "status-badge-in-progress": {

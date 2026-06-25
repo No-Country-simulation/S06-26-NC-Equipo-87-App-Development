@@ -87,10 +87,10 @@ public class LookupIntegrationTests(IntegrationTestFactory factory) : IClassFixt
         List<IncidentType>? result = await response.Content.ReadFromJsonAsync<List<IncidentType>>();
         Assert.NotNull(result);
         Assert.Equal(4, result.Count);
-        Assert.Contains(result, t => t.Name == "Falla mecánica" && t.Status == "Active");
-        Assert.Contains(result, t => t.Name == "Accidente" && t.Status == "Active");
-        Assert.Contains(result, t => t.Name == "Calidad" && t.Status == "Active");
-        Assert.Contains(result, t => t.Name == "Otro" && t.Status == "Active");
+        Assert.Contains(result, t => t.Name == "Falla mecánica" && t.Status == "Active" && t.SpecialityId == 1 && t.Speciality != null && t.Speciality.Name == "Mecanico");
+        Assert.Contains(result, t => t.Name == "Accidente" && t.Status == "Active" && t.SpecialityId == 3 && t.Speciality != null && t.Speciality.Name == "Seguridad");
+        Assert.Contains(result, t => t.Name == "Calidad" && t.Status == "Active" && t.SpecialityId == 2 && t.Speciality != null && t.Speciality.Name == "Calidad");
+        Assert.Contains(result, t => t.Name == "Otro" && t.Status == "Active" && t.SpecialityId == 4 && t.Speciality != null && t.Speciality.Name == "General");
     }
 
     [Fact]
@@ -113,6 +113,39 @@ public class LookupIntegrationTests(IntegrationTestFactory factory) : IClassFixt
         Assert.Contains(result, s => s.Name == "Alto" && s.Status == "Active");
         Assert.Contains(result, s => s.Name == "Medio" && s.Status == "Active");
         Assert.Contains(result, s => s.Name == "Bajo" && s.Status == "Active");
+    }
+
+    [Fact]
+    public async Task GetSpecialities_Authenticated_ReturnsOkAndSeededSpecialities()
+    {
+        // Arrange
+        string token = await AuthenticateUserAsync("specialities.tester@opscore.com");
+        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "/api/specialities");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        HttpResponseMessage response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        List<Speciality>? result = await response.Content.ReadFromJsonAsync<List<Speciality>>();
+        Assert.NotNull(result);
+        Assert.Equal(4, result.Count);
+        Assert.Contains(result, s => s.Id == 1 && s.Name == "Mecanico" && s.Status == "Active");
+        Assert.Contains(result, s => s.Id == 2 && s.Name == "Calidad" && s.Status == "Active");
+        Assert.Contains(result, s => s.Id == 3 && s.Name == "Seguridad" && s.Status == "Active");
+        Assert.Contains(result, s => s.Id == 4 && s.Name == "General" && s.Status == "Active");
+    }
+
+    [Fact]
+    public async Task GetSpecialities_Unauthenticated_ReturnsUnauthorized()
+    {
+        // Act
+        HttpResponseMessage response = await _client.GetAsync("/api/specialities");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     private class LoginResponseDto

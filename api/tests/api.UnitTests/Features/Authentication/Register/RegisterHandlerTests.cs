@@ -142,14 +142,19 @@ public class RegisterHandlerTests
             LastName = "Doe",
             Password = "Password123!",
             Email = "new@example.com",
-            Role = "Operator"
+            Role = "Operator",
+            SpecialityId = 2
         };
 
         _roleManagerMock.Setup(r => r.RoleExistsAsync(command.Role))
             .ReturnsAsync(true);
 
         _userManagerMock.Setup(u => u.CreateAsync(It.IsAny<User>(), command.Password))
-            .Callback<User, string>((user, pwd) => user.Id = "generated-guid")
+            .Callback<User, string>((user, pwd) =>
+            {
+                user.Id = "generated-guid";
+                user.SpecialityId = 2;
+            })
             .ReturnsAsync(IdentityResult.Success);
 
         _userManagerMock.Setup(u => u.AddToRoleAsync(It.IsAny<User>(), command.Role))
@@ -167,6 +172,7 @@ public class RegisterHandlerTests
         Assert.Equal("John", result.FirstName);
         Assert.Equal("Doe", result.LastName);
         Assert.Equal("Operator", result.Role);
+        Assert.Equal(2, result.SpecialityId);
         Assert.NotNull(result.Pin);
         Assert.Equal(4, result.Pin.Length);
         Assert.True(result.Pin.All(char.IsDigit));

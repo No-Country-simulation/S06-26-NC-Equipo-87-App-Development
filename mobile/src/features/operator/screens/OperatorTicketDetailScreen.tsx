@@ -7,10 +7,10 @@ import { Typography } from '../../../shared/components/atoms/Typography';
 import { StepIndicator } from '../../../shared/components/atoms/StepIndicator';
 import { IncidentConfirmationHero } from '../../../shared/components/organisms/IncidentConfirmationHero';
 import { IncidentSummaryCard } from '../../../shared/components/organisms/IncidentSummaryCard';
-import { getRequest } from '../../../shared/api/apiClient';
+import { useIncidentStore } from '../../incidents/stores/useIncidentStore';
 import designTokens from '../../../shared/theme/designTokens.json';
 
-interface IncidentDetailScreenProps {
+interface OperatorTicketDetailScreenProps {
   incidentId: string;
   onBack?: () => void;
   onClose?: () => void;
@@ -70,11 +70,12 @@ const mapBackendToIncident = (data: BackendIncidentDetail): MappedIncident => ({
   time: formatTime(data.reportedDate),
 });
 
-export const IncidentDetailScreen: React.FC<IncidentDetailScreenProps> = ({
+export const OperatorTicketDetailScreen: React.FC<OperatorTicketDetailScreenProps> = ({
   incidentId,
   onBack,
   onClose,
 }) => {
+  const fetchIncidentDetailStore = useIncidentStore((state) => state.fetchIncidentDetail);
   const [incident, setIncident] = useState<MappedIncident | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,14 +84,14 @@ export const IncidentDetailScreen: React.FC<IncidentDetailScreenProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const data = await getRequest<BackendIncidentDetail>(`/api/incidents/${incidentId}`);
+      const data = await fetchIncidentDetailStore(incidentId);
       setIncident(mapBackendToIncident(data));
     } catch (err: unknown) {
       setError((err as Error)?.message || 'Error al obtener los detalles del incidente.');
     } finally {
       setLoading(false);
     }
-  }, [incidentId]);
+  }, [incidentId, fetchIncidentDetailStore]);
 
   useEffect(() => {
     fetchIncidentDetail();

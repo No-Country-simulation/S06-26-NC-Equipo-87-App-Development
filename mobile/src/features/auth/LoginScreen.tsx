@@ -10,60 +10,34 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import designTokens from '../../shared/theme/designTokens.json';
-import { postRequest, ApiError } from '../../shared/api/apiClient';
-import { saveToken } from '../../shared/auth/tokenService';
 import { Logo } from '../../shared/components/Logo';
 import { Typography } from '../../shared/components/atoms/Typography';
+import { useAuthStore } from './stores/useAuthStore';
 
 interface LoginScreenProps {
   onLoginSuccess: (token: string) => void;
 }
 
-interface LoginResponse {
-  token?: string;
-  Token?: string;
-}
-
 export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { login, loading, error, clearError } = useAuthStore();
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const handleLogin = async () => {
     if (!identifier.trim() || !password.trim()) {
-      setError('Por favor ingrese Número de empleado y PIN.');
+      setValidationError('Por favor ingrese Número de empleado y PIN.');
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    setValidationError(null);
+    clearError();
 
     try {
-      const response = await postRequest<{ Identifier: string; Password: string }, LoginResponse>(
-        '/api/authentication/login',
-        {
-          Identifier: identifier.trim(),
-          Password: password,
-        }
-      );
-      const tokenVal = response?.token || response?.Token;
-      if (!tokenVal) {
-        throw { message: 'Authentication response did not contain a valid session token.' };
-      }
-      await saveToken(tokenVal);
+      const tokenVal = await login(identifier.trim(), password);
       onLoginSuccess(tokenVal);
-    } catch (err) {
-      const apiErr = err as ApiError;
-      if (apiErr.errors) {
-        const firstErrorKey = Object.keys(apiErr.errors)[0];
-        const messages = apiErr.errors[firstErrorKey];
-        setError(messages && messages.length > 0 ? messages[0] : apiErr.message);
-      } else {
-        setError(apiErr.message || 'Error al iniciar sesión. Verifique sus credenciales.');
-      }
-    } finally {
-      setLoading(false);
+    } catch {
+      // Error handled by store
     }
   };
 
@@ -93,7 +67,11 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
                 placeholder="Número de empleado"
                 placeholderTextColor={designTokens.colors['text-muted']}
                 value={identifier}
-                onChangeText={setIdentifier}
+                onChangeText={(val) => {
+                  setIdentifier(val);
+                  setValidationError(null);
+                  clearError();
+                }}
                 autoCapitalize="none"
                 autoCorrect={false}
                 keyboardType="numeric"
@@ -110,7 +88,11 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
                 placeholder="PIN de acceso"
                 placeholderTextColor={designTokens.colors['text-muted']}
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={(val) => {
+                  setPassword(val);
+                  setValidationError(null);
+                  clearError();
+                }}
                 secureTextEntry
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -122,9 +104,9 @@ export const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
               />
             </View>
 
-            {error && (
+            {(validationError || error) && (
               <Typography variant="caption" color={designTokens.colors['status-open']} style={styles.errorText} testID="error-message">
-                {error}
+                {validationError || error}
               </Typography>
             )}
 
