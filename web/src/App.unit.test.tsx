@@ -1,9 +1,15 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import App from './App';
 import { expect, test } from 'vitest';
 
-test('renders get started heading', () => {
+test('renders login fields after initialization', async () => {
   render(<App />);
-  const headingElement = screen.getByText(/Get started/i);
-  expect(headingElement).toBeInTheDocument();
+
+  await waitFor(() => {
+    expect(screen.queryByTestId('app-initializing')).not.toBeInTheDocument();
+  });
+
+  expect(screen.getByTestId('identifier-input')).toBeInTheDocument();
+  expect(screen.getByTestId('password-input')).toBeInTheDocument();
+  expect(screen.getByTestId('login-button')).toBeInTheDocument();
 });

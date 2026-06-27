@@ -104,6 +104,10 @@ export const TechnicianCloseTicketScreen: React.FC<TechnicianCloseTicketScreenPr
       setValidationError('La solución aplicada es obligatoria.');
       return;
     }
+    if (text.length < 20) {
+      setValidationError('Ingresa al menos 20 caracteres.');
+      return;
+    }
 
     const matchedCause = rootCauses.find((rc) => rc.name === selectedRootCause);
     if (!matchedCause) {
@@ -186,10 +190,10 @@ export const TechnicianCloseTicketScreen: React.FC<TechnicianCloseTicketScreenPr
           value={solutionText}
           onChangeText={(val) => {
             setSolutionText(val);
-            if (val.trim()) setValidationError(null);
+            if (val.trim().length >= 20) setValidationError(null);
           }}
           errorMessage={validationError || undefined}
-          maxCharacters={200}
+          maxCharacters={500}
           placeholder="Describa la solución realizada..."
         />
 

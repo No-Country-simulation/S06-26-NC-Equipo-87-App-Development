@@ -136,7 +136,7 @@ export const SupervisorDashboardScreen: React.FC<SupervisorDashboardScreenProps>
       elapsedTime: formatElapsed(item.reportedDate),
       categoryName: item.incidentTypeName || 'Incidente',
       description: item.description,
-      operatorNumber: item.reportedByUserId ? '#' + item.reportedByUserId.substring(0, 5) : 'N/A',
+      operatorNumber: item.reportedByEmployeeId ? '#' + item.reportedByEmployeeId : 'N/A',
       severity: mapSeverity(item.severityTypeName),
       status: mapStatusToType(item.status),
       statusLabel: mapStatusToLabel(item.status),

@@ -7,6 +7,7 @@ using api.Features.Incidents.Close;
 using api.Features.Incidents.Common;
 using api.Features.Incidents.Create;
 using api.Features.Incidents.Detail;
+using api.Features.Incidents.Edit;
 using api.Features.Incidents.List;
 using api.Features.Incidents.Start;
 using api.Features.Lookups.Areas;
@@ -77,6 +78,7 @@ public static class DependencyInjectionExtensions
         services.AddScoped<RegisterHandler>();
         services.AddScoped<LoginHandler>();
         services.AddScoped<CreateIncidentHandler>();
+        services.AddScoped<EditIncidentHandler>();
         services.AddScoped<ListIncidentsHandler>();
         services.AddScoped<GetIncidentDetailHandler>();
         services.AddScoped<AssignIncidentHandler>();

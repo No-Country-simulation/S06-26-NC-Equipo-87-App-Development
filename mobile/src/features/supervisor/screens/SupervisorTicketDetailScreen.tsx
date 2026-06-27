@@ -167,7 +167,7 @@ export const SupervisorTicketDetailScreen: React.FC<SupervisorTicketDetailScreen
       elapsedTime: formatElapsed(selectedIncident.reportedDate),
       categoryName: selectedIncident.incidentTypeName || 'Incidente',
       description: selectedIncident.description,
-      operatorNumber: selectedIncident.reportedByUserId ? '#' + String(selectedIncident.reportedByUserId).substring(0, 5) : 'N/A',
+      operatorNumber: selectedIncident.reportedByEmployeeId ? '#' + selectedIncident.reportedByEmployeeId : 'N/A',
       severity: mapSeverity(selectedIncident.severityTypeName),
       status: mapStatusToType(selectedIncident.status),
       statusLabel: mapStatusToLabel(selectedIncident.status),

@@ -29,8 +29,10 @@ const styles = StyleSheet.create({
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 8,
     height: 22,
+    minWidth: 90,
     borderRadius: 100,
   },
   dot: {

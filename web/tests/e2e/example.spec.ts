@@ -1,15 +1,18 @@
 import { test, expect } from '@playwright/test';
 
-test('should increment counter on click', async ({ page }) => {
+test('should render the login screen', async ({ page }) => {
   await page.goto('/');
 
-  const counterButton = page.locator('button.counter');
-  await expect(counterButton).toBeVisible();
-  await expect(counterButton).toHaveText('Count is 0');
+  const title = page.locator('.opscore-login-title');
+  await expect(title).toBeVisible();
+  await expect(title).toHaveText('OpsCore');
 
-  await counterButton.click();
-  await expect(counterButton).toHaveText('Count is 1');
+  const idInput = page.locator('[data-testid="identifier-input"]');
+  await expect(idInput).toBeVisible();
 
-  await counterButton.click();
-  await expect(counterButton).toHaveText('Count is 2');
+  const passwordInput = page.locator('[data-testid="password-input"]');
+  await expect(passwordInput).toBeVisible();
+
+  const loginButton = page.locator('[data-testid="login-button"]');
+  await expect(loginButton).toBeVisible();
 });

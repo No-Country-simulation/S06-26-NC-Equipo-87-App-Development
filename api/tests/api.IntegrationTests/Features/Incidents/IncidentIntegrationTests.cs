@@ -7,6 +7,7 @@ using api.Features.Authentication.Register;
 using api.Features.Incidents.Close;
 using api.Features.Incidents.Create;
 using api.Features.Incidents.Detail;
+using api.Features.Incidents.Edit;
 using api.Features.Incidents.List;
 using api.Features.Lookups.Common;
 
@@ -667,6 +668,261 @@ public class IncidentIntegrationTests(IntegrationTestFactory factory) : IClassFi
         closeReq2.Headers.Authorization = new AuthenticationHeaderValue("Bearer", techToken);
         HttpResponseMessage closeResponse2 = await _client.SendAsync(closeReq2);
         Assert.Equal(HttpStatusCode.BadRequest, closeResponse2.StatusCode);
+    }
+
+    [Fact]
+    public async Task EditIncident_ValidPayloadByCreator_ReturnsOkWithUpdatedData()
+    {
+        // Arrange — create incident as operator
+        string operatorToken = await AuthenticateUserAsync("operator.edit.happy@opscore.com", "Operator");
+
+        CreateIncidentCommand createCmd = new CreateIncidentCommand
+        {
+            AreaId = 1,
+            IncidentTypeId = 1,
+            SeverityTypeId = 1,
+            Description = "Original incident description that is long enough"
+        };
+        HttpRequestMessage createReq = new HttpRequestMessage(HttpMethod.Post, "/api/incidents")
+        {
+            Content = JsonContent.Create(createCmd)
+        };
+        createReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", operatorToken);
+        HttpResponseMessage createRes = await _client.SendAsync(createReq);
+        CreateIncidentResponse? created = await createRes.Content.ReadFromJsonAsync<CreateIncidentResponse>();
+        Assert.NotNull(created);
+
+        EditIncidentCommand editCmd = new EditIncidentCommand
+        {
+            AreaId = 2,
+            IncidentTypeId = 2,
+            SeverityTypeId = 2,
+            Description = "Updated incident description that is long enough to be valid"
+        };
+        HttpRequestMessage editReq = new HttpRequestMessage(HttpMethod.Put, $"/api/incidents/{created.IncidentId}")
+        {
+            Content = JsonContent.Create(editCmd)
+        };
+        editReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", operatorToken);
+
+        // Act
+        HttpResponseMessage editRes = await _client.SendAsync(editReq);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, editRes.StatusCode);
+        EditIncidentResponse? updated = await editRes.Content.ReadFromJsonAsync<EditIncidentResponse>();
+        Assert.NotNull(updated);
+        Assert.Equal(created.IncidentId, updated.IncidentId);
+        Assert.Equal(editCmd.Description, updated.Description);
+        Assert.Equal(editCmd.AreaId, updated.AreaId);
+        Assert.Equal(editCmd.IncidentTypeId, updated.IncidentTypeId);
+        Assert.Equal(editCmd.SeverityTypeId, updated.SeverityTypeId);
+        Assert.Equal("Open", updated.Status);
+    }
+
+    [Fact]
+    public async Task EditIncident_Unauthenticated_ReturnsUnauthorized()
+    {
+        // Act
+        EditIncidentCommand editCmd = new EditIncidentCommand
+        {
+            AreaId = 1,
+            IncidentTypeId = 1,
+            SeverityTypeId = 1,
+            Description = "Trying to edit without a token"
+        };
+        var response = await _client.PutAsJsonAsync("/api/incidents/INC-0001", editCmd);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task EditIncident_AsTechnician_ReturnsForbidden()
+    {
+        // Arrange
+        string techToken = await AuthenticateUserAsync("technician.edit@opscore.com", "Technician");
+
+        EditIncidentCommand editCmd = new EditIncidentCommand
+        {
+            AreaId = 1,
+            IncidentTypeId = 1,
+            SeverityTypeId = 1,
+            Description = "Technician should not be able to edit incidents"
+        };
+        HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Put, "/api/incidents/INC-0001")
+        {
+            Content = JsonContent.Create(editCmd)
+        };
+        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", techToken);
+
+        // Act
+        var response = await _client.SendAsync(req);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task EditIncident_NonExistentIncident_ReturnsNotFound()
+    {
+        // Arrange
+        string token = await AuthenticateUserAsync("operator.edit.notfound@opscore.com", "Operator");
+
+        EditIncidentCommand editCmd = new EditIncidentCommand
+        {
+            AreaId = 1,
+            IncidentTypeId = 1,
+            SeverityTypeId = 1,
+            Description = "Editing an incident that does not exist anywhere"
+        };
+        HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Put, "/api/incidents/INC-9999")
+        {
+            Content = JsonContent.Create(editCmd)
+        };
+        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.SendAsync(req);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task EditIncident_DescriptionTooShort_ReturnsBadRequest()
+    {
+        // Arrange
+        string token = await AuthenticateUserAsync("operator.edit.shortdesc@opscore.com", "Operator");
+
+        CreateIncidentCommand createCmd = new CreateIncidentCommand
+        {
+            AreaId = 1,
+            IncidentTypeId = 1,
+            SeverityTypeId = 1,
+            Description = "Valid description for the initial report"
+        };
+        HttpRequestMessage createReq = new HttpRequestMessage(HttpMethod.Post, "/api/incidents")
+        {
+            Content = JsonContent.Create(createCmd)
+        };
+        createReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        HttpResponseMessage createRes = await _client.SendAsync(createReq);
+        CreateIncidentResponse? created = await createRes.Content.ReadFromJsonAsync<CreateIncidentResponse>();
+        Assert.NotNull(created);
+
+        EditIncidentCommand editCmd = new EditIncidentCommand
+        {
+            AreaId = 1,
+            IncidentTypeId = 1,
+            SeverityTypeId = 1,
+            Description = "Too short" // < 20 chars
+        };
+        HttpRequestMessage editReq = new HttpRequestMessage(HttpMethod.Put, $"/api/incidents/{created.IncidentId}")
+        {
+            Content = JsonContent.Create(editCmd)
+        };
+        editReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.SendAsync(editReq);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task EditIncident_DifferentUserThanCreator_ReturnsBadRequest()
+    {
+        // Arrange — incident created by user A, edit attempted by user B
+        string creatorToken = await AuthenticateUserAsync("operator.edit.creator@opscore.com", "Operator");
+        string otherToken = await AuthenticateUserAsync("operator.edit.other@opscore.com", "Operator");
+
+        CreateIncidentCommand createCmd = new CreateIncidentCommand
+        {
+            AreaId = 1,
+            IncidentTypeId = 1,
+            SeverityTypeId = 1,
+            Description = "Incident created by a specific operator user"
+        };
+        HttpRequestMessage createReq = new HttpRequestMessage(HttpMethod.Post, "/api/incidents")
+        {
+            Content = JsonContent.Create(createCmd)
+        };
+        createReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", creatorToken);
+        HttpResponseMessage createRes = await _client.SendAsync(createReq);
+        CreateIncidentResponse? created = await createRes.Content.ReadFromJsonAsync<CreateIncidentResponse>();
+        Assert.NotNull(created);
+
+        EditIncidentCommand editCmd = new EditIncidentCommand
+        {
+            AreaId = 2,
+            IncidentTypeId = 2,
+            SeverityTypeId = 2,
+            Description = "Trying to edit someone else's incident report"
+        };
+        HttpRequestMessage editReq = new HttpRequestMessage(HttpMethod.Put, $"/api/incidents/{created.IncidentId}")
+        {
+            Content = JsonContent.Create(editCmd)
+        };
+        editReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", otherToken);
+
+        // Act
+        HttpResponseMessage editRes = await _client.SendAsync(editReq);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, editRes.StatusCode);
+    }
+
+    [Fact]
+    public async Task EditIncident_IncidentNotOpen_ReturnsBadRequest()
+    {
+        // Arrange — create, then manually set status to Assigned
+        string token = await AuthenticateUserAsync("operator.edit.notopen@opscore.com", "Operator");
+
+        CreateIncidentCommand createCmd = new CreateIncidentCommand
+        {
+            AreaId = 1,
+            IncidentTypeId = 1,
+            SeverityTypeId = 1,
+            Description = "Incident that will be moved to Assigned status"
+        };
+        HttpRequestMessage createReq = new HttpRequestMessage(HttpMethod.Post, "/api/incidents")
+        {
+            Content = JsonContent.Create(createCmd)
+        };
+        createReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        HttpResponseMessage createRes = await _client.SendAsync(createReq);
+        CreateIncidentResponse? created = await createRes.Content.ReadFromJsonAsync<CreateIncidentResponse>();
+        Assert.NotNull(created);
+
+        // Move status out of Open
+        using (IServiceScope scope = _factory.Services.CreateScope())
+        {
+            api.Data.AppDbContext db = scope.ServiceProvider.GetRequiredService<api.Data.AppDbContext>();
+            api.Features.Incidents.Common.Incident incEntity = db.Incidents.First(i => i.IncidentId == created.IncidentId);
+            incEntity.Status = "Assigned";
+            await db.SaveChangesAsync();
+        }
+
+        EditIncidentCommand editCmd = new EditIncidentCommand
+        {
+            AreaId = 2,
+            IncidentTypeId = 2,
+            SeverityTypeId = 2,
+            Description = "Trying to edit an incident that is no longer open"
+        };
+        HttpRequestMessage editReq = new HttpRequestMessage(HttpMethod.Put, $"/api/incidents/{created.IncidentId}")
+        {
+            Content = JsonContent.Create(editCmd)
+        };
+        editReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        HttpResponseMessage editRes = await _client.SendAsync(editReq);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, editRes.StatusCode);
     }
 
     private class LoginResponseDto

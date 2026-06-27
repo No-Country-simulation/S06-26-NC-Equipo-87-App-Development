@@ -1,3 +1,5 @@
+using FluentValidation;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,9 +8,10 @@ namespace api.Features.Incidents.Close;
 [ApiController]
 [Route("api/incidents")]
 [Tags("Incidents")]
-public class CloseIncidentEndpoint(CloseIncidentHandler handler) : ControllerBase
+public class CloseIncidentEndpoint(CloseIncidentHandler handler, IValidator<CloseIncidentCommand> validator) : ControllerBase
 {
     private readonly CloseIncidentHandler _handler = handler;
+    private readonly IValidator<CloseIncidentCommand> _validator = validator;
 
     [HttpPost("{incidentId}/close")]
     [Authorize(Roles = "Technician")]
@@ -19,6 +22,16 @@ public class CloseIncidentEndpoint(CloseIncidentHandler handler) : ControllerBas
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Close([FromRoute] string incidentId, [FromBody] CloseIncidentCommand command)
     {
+        var validationResult = await _validator.ValidateAsync(command);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
         var result = await _handler.HandleAsync(incidentId, command);
         if (!result.Succeeded)
         {
