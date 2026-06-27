@@ -3,24 +3,24 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace api.Features.Incidents.Close;
+namespace api.Features.Incidents.Edit;
 
 [ApiController]
 [Route("api/incidents")]
 [Tags("Incidents")]
-public class CloseIncidentEndpoint(CloseIncidentHandler handler, IValidator<CloseIncidentCommand> validator) : ControllerBase
+public class EditIncidentEndpoint(EditIncidentHandler handler, IValidator<EditIncidentCommand> validator) : ControllerBase
 {
-    private readonly CloseIncidentHandler _handler = handler;
-    private readonly IValidator<CloseIncidentCommand> _validator = validator;
+    private readonly EditIncidentHandler _handler = handler;
+    private readonly IValidator<EditIncidentCommand> _validator = validator;
 
-    [HttpPost("{incidentId}/close")]
-    [Authorize(Roles = "Technician")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [HttpPut("{incidentId}")]
+    [Authorize(Roles = "Operator,Supervisor")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(EditIncidentResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ValidationProblemDetails))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> Close([FromRoute] string incidentId, [FromBody] CloseIncidentCommand command)
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Edit([FromRoute] string incidentId, [FromBody] EditIncidentCommand command)
     {
         var validationResult = await _validator.ValidateAsync(command);
         if (!validationResult.IsValid)
@@ -39,10 +39,10 @@ public class CloseIncidentEndpoint(CloseIncidentHandler handler, IValidator<Clos
             {
                 return NotFound(new { message = result.ErrorMessage });
             }
-            ModelState.AddModelError("Error", result.ErrorMessage ?? "Failed to close incident.");
+            ModelState.AddModelError("Error", result.ErrorMessage ?? "Failed to edit incident.");
             return ValidationProblem(ModelState);
         }
 
-        return Ok(new { message = "Incident closed successfully." });
+        return Ok(result.Response);
     }
 }

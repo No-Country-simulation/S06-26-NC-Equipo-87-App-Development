@@ -12,5 +12,6 @@ public class IncidentListItemResponse
     public string SeverityTypeName { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public string ReportedByUserId { get; set; } = string.Empty;
+    public string ReportedByEmployeeId { get; set; } = string.Empty;
     public DateTimeOffset ReportedDate { get; set; }
 }

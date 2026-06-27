@@ -24,6 +24,7 @@ export interface BackendIncidentDetail {
   severityTypeName: string;
   status: string;
   reportedByUserId: string;
+  reportedByEmployeeId?: string;
   reportedDate: string;
   history?: IncidentStatusHistoryDto[];
 }

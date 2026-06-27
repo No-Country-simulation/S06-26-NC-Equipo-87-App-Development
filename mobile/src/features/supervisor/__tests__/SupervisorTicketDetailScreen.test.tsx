@@ -58,6 +58,7 @@ describe('<SupervisorTicketDetailScreen />', () => {
       severityTypeName: 'Medio',
       status: 'open',
       reportedByUserId: 'user-123',
+      reportedByEmployeeId: '0014',
       reportedDate: new Date().toISOString(),
       history: [],
     };

@@ -74,6 +74,10 @@ public class ListIncidentsHandler(AppDbContext dbContext, IHttpContextAccessor h
                     .OrderBy(h => h.ChangedDate)
                     .Select(h => h.ChangedByUserId)
                     .FirstOrDefault() ?? string.Empty,
+                ReportedByEmployeeId = i.StatusHistories
+                    .OrderBy(h => h.ChangedDate)
+                    .Select(h => h.ChangedByUser.EmployeeId)
+                    .FirstOrDefault() ?? string.Empty,
                 ReportedDate = i.StatusHistories
                     .OrderBy(h => h.ChangedDate)
                     .Select(h => h.ChangedDate)

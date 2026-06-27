@@ -30,6 +30,7 @@ public class GetIncidentDetailHandler(AppDbContext dbContext)
 
         IncidentStatusHistory? earliestHistory = chronologicalHistory.FirstOrDefault();
         string reportedByUserId = earliestHistory?.ChangedByUserId ?? string.Empty;
+        string reportedByEmployeeId = earliestHistory?.ChangedByUser?.EmployeeId ?? string.Empty;
         DateTimeOffset reportedDate = earliestHistory?.ChangedDate ?? DateTimeOffset.MinValue;
 
         List<IncidentStatusHistoryDto> historyDtos = chronologicalHistory.Select(h => new IncidentStatusHistoryDto
@@ -55,6 +56,7 @@ public class GetIncidentDetailHandler(AppDbContext dbContext)
             SeverityTypeName = incident.SeverityType.Name,
             Status = incident.Status,
             ReportedByUserId = reportedByUserId,
+            ReportedByEmployeeId = reportedByEmployeeId,
             ReportedDate = reportedDate,
             History = historyDtos
         };

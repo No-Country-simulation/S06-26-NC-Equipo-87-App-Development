@@ -36,6 +36,7 @@ const mockBackendIncident = {
   severityTypeName: 'Alto',
   status: 'open',
   reportedByUserId: 'user-1',
+  reportedByEmployeeId: '0014',
   reportedDate: '2026-06-18T09:44:00.000Z',
 };
 

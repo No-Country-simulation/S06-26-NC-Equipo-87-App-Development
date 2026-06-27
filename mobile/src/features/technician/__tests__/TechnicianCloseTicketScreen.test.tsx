@@ -63,6 +63,7 @@ describe('<TechnicianCloseTicketScreen />', () => {
       severityTypeName: 'Medio',
       status: 'assigned',
       reportedByUserId: 'user-123',
+      reportedByEmployeeId: '0014',
       reportedDate: new Date().toISOString(),
     };
 

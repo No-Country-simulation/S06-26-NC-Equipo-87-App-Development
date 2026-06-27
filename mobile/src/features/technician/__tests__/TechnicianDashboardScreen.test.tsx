@@ -70,6 +70,7 @@ describe('<TechnicianDashboardScreen />', () => {
         severityTypeName: 'Medio',
         status: 'assigned',
         reportedByUserId: 'user-1',
+        reportedByEmployeeId: '0014',
         reportedDate: new Date().toISOString(),
       },
     ];
