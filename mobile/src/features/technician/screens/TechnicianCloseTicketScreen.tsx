@@ -55,14 +55,14 @@ export const TechnicianCloseTicketScreen: React.FC<TechnicianCloseTicketScreenPr
     const diffMins = Math.max(0, Math.floor(diffMs / 60000));
     
     if (diffMins < 60) {
-      return `Abierto hace ${diffMins} min`;
+      return `Abierto ${diffMins} min`;
     }
     const diffHours = Math.floor(diffMins / 60);
     if (diffHours < 24) {
-      return `Abierto hace ${diffHours} h`;
+      return `Abierto ${diffHours} h`;
     }
     const diffDays = Math.floor(diffHours / 24);
-    return `Abierto hace ${diffDays} d`;
+    return `Abierto ${diffDays} d`;
   };
 
   const fetchInitialData = useCallback(async () => {

@@ -2,6 +2,8 @@ using api.Data;
 using api.Features.Authentication.Common;
 using api.Features.Authentication.Login;
 using api.Features.Authentication.Register;
+using api.Features.Dashboard.GetAnalyticalDashboard;
+using api.Features.Dashboard.GetOperationalDashboard;
 using api.Features.Incidents.Assign;
 using api.Features.Incidents.Close;
 using api.Features.Incidents.Common;
@@ -91,6 +93,8 @@ public static class DependencyInjectionExtensions
         services.AddScoped<ListTechniciansHandler>();
         services.AddScoped<CloseIncidentHandler>();
         services.AddScoped<ListRootCauseTypesHandler>();
+        services.AddScoped<GetOperationalDashboardHandler>();
+        services.AddScoped<GetAnalyticalDashboardHandler>();
         services.AddValidatorsFromAssemblyContaining<RegisterCommandValidator>();
         return services;
     }

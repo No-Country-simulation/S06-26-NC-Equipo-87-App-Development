@@ -1,58 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Logo } from '../../shared/components/molecules/Logo';
 import { Typography } from '../../shared/components/atoms/Typography';
 import { LoginForm } from './components/LoginForm';
-import { postRequest, type ApiError } from '../../shared/api/apiClient';
-import { saveToken } from '../../shared/auth/tokenService';
-import { decodeJwt } from '../../shared/auth/jwtDecoder';
+import { useWebAuthStore } from './stores/useWebAuthStore';
 
-interface LoginScreenProps {
-  onLoginSuccess: (token: string, user: Record<string, unknown> | null) => void;
-}
-
-interface LoginResponse {
-  token?: string;
-  Token?: string;
-}
-
-export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export const LoginScreen: React.FC = () => {
+  const { login, loading, error } = useWebAuthStore();
 
   const handleLogin = async (identifier: string, pin: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await postRequest<{ Identifier: string; Password: string }, LoginResponse>(
-        '/api/authentication/login',
-        {
-          Identifier: identifier,
-          Password: pin,
-        }
-      );
-      const tokenVal = response?.token || response?.Token;
-      if (!tokenVal) {
-        throw new Error('Authentication response did not contain a valid session token.');
-      }
-      await saveToken(tokenVal);
-      const decoded = decodeJwt(tokenVal);
-      onLoginSuccess(tokenVal, decoded);
-    } catch (err: unknown) {
-      const apiErr = err as ApiError;
-      let errorMessage = 'Error al iniciar sesión. Verifique sus credenciales.';
-      if (apiErr.errors) {
-        const firstErrorKey = Object.keys(apiErr.errors)[0];
-        const messages = apiErr.errors[firstErrorKey];
-        errorMessage = messages && messages.length > 0 ? messages[0] : apiErr.message;
-      } else if (apiErr.message) {
-        errorMessage = apiErr.message;
-      }
-      setError(errorMessage);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
+    await login(identifier, pin);
   };
+
 
   return (
     <div className="opscore-login-page">
@@ -94,10 +52,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
           <div className="opscore-login-form-footer">
             <Typography variant="caption" color="#888780" component="div">
-              ¿Necesitas acceso?
-            </Typography>
-            <Typography variant="caption" color="#888780" component="div" className="opscore-login-contact">
-              Contacta a tu administrador de planta
+              ¿Necesitas acceso?{' '}
+              <span className="opscore-login-contact">
+                Contacta a tu administrador de planta
+              </span>
             </Typography>
           </div>
         </div>

@@ -584,19 +584,13 @@ namespace api.Data.Migrations
                         new
                         {
                             Id = 1,
-                            Name = "Turno mañana",
+                            Name = "Matutino",
                             Status = "Active"
                         },
                         new
                         {
                             Id = 2,
-                            Name = "Turno tarde",
-                            Status = "Active"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Name = "Turno nocturno",
+                            Name = "Vespertino",
                             Status = "Active"
                         });
                 });

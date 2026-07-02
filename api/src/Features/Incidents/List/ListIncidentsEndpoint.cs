@@ -12,7 +12,7 @@ public class ListIncidentsEndpoint(ListIncidentsHandler handler) : ControllerBas
 
     [HttpGet]
     [Authorize]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<IncidentListItemResponse>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IncidentListResponse))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> List([FromQuery] ListIncidentsQuery query)
     {

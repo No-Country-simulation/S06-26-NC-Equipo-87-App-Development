@@ -49,7 +49,19 @@ test('successful login and incident loading flow', async () => {
     if (url.includes('/api/incidents')) {
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve(MOCK_INCIDENTS),
+        json: () => Promise.resolve({
+          items: MOCK_INCIDENTS,
+          currentPage: 1,
+          pageSize: 10,
+          totalItems: MOCK_INCIDENTS.length,
+          totalPages: 1
+        }),
+      });
+    }
+    if (url.includes('/api/areas')) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve([{ areaId: 2, name: 'Línea 3' }]),
       });
     }
     return Promise.reject(new Error('Unknown URL requested'));
@@ -76,6 +88,6 @@ test('successful login and incident loading flow', async () => {
   });
 
   expect(screen.getByText('Santiago Mendoza')).toBeInTheDocument();
-  expect(screen.getByText('(Supervisor)')).toBeInTheDocument();
+  expect(screen.getByText('SUPERVISOR')).toBeInTheDocument();
   expect(screen.getByText('Falla mecanica en motor principal')).toBeInTheDocument();
 });

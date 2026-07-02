@@ -19,7 +19,7 @@ public class RegisterCommandValidatorTests
 
         // Seed some defaults
         _dbContext.Areas.Add(new api.Features.Lookups.Common.Area { Id = 1, Name = "Zona Norte", Status = "Active" });
-        _dbContext.Shifts.Add(new api.Features.Lookups.Common.Shift { Id = 1, Name = "Turno mañana", Status = "Active" });
+        _dbContext.Shifts.Add(new api.Features.Lookups.Common.Shift { Id = 1, Name = "Matutino", Status = "Active" });
         _dbContext.Specialities.Add(new api.Features.Lookups.Common.Speciality { Id = 1, Name = "Mecanico", Status = "Active" });
         _dbContext.SaveChanges();
 

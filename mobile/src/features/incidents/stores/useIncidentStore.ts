@@ -29,6 +29,14 @@ export interface BackendIncidentDetail {
   history?: IncidentStatusHistoryDto[];
 }
 
+export interface BackendIncidentListResponse {
+  items: BackendIncidentDetail[];
+  currentPage: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+}
+
 export interface BackendTechnician {
   userId: string;
   firstName: string;
@@ -74,11 +82,11 @@ export const useIncidentStore = create<IncidentState>((set) => ({
   fetchOperatorIncidents: async (userId: string, sinceDate: string) => {
     set({ loading: true, error: null });
     try {
-      const data = await getRequest<BackendIncidentDetail[]>(
+      const response = await getRequest<BackendIncidentListResponse>(
         `/api/incidents?reportedByUserId=${encodeURIComponent(userId)}&since=${encodeURIComponent(sinceDate)}`
       );
-      set({ incidents: data, loading: false });
-      return data;
+      set({ incidents: response.items, loading: false });
+      return response.items;
     } catch (err: unknown) {
       set({
         error: (err as Error)?.message || 'Error al obtener los incidentes.',
@@ -91,9 +99,9 @@ export const useIncidentStore = create<IncidentState>((set) => ({
   fetchSupervisorIncidents: async () => {
     set({ loading: true, error: null });
     try {
-      const data = await getRequest<BackendIncidentDetail[]>('/api/incidents');
-      set({ incidents: data, loading: false });
-      return data;
+      const response = await getRequest<BackendIncidentListResponse>('/api/incidents');
+      set({ incidents: response.items, loading: false });
+      return response.items;
     } catch (err: unknown) {
       set({
         error: (err as Error)?.message || 'Error al obtener los incidentes.',

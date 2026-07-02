@@ -1,25 +1,16 @@
 import React from 'react';
 import { type Incident } from './IncidentCard';
 import { Typography } from '../../../shared/components/atoms/Typography';
+import { getStatusKey, getStatusLabel } from '../../../shared/utils/status';
 
 interface IncidentListProps {
   incidents: Incident[];
   loading: boolean;
+  currentPage: number;
+  totalCount: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
 }
-
-const getStatusKey = (status: string) => {
-  const s = status.toLowerCase();
-  if (s === 'open' || s === 'abierto') return 'open';
-  if (s === 'in progress' || s === 'in-progress' || s === 'en proceso' || s === 'en-proceso') return 'in-progress';
-  return 'closed';
-};
-
-const getStatusLabel = (status: string) => {
-  const s = status.toLowerCase();
-  if (s === 'open' || s === 'abierto') return 'Abierto';
-  if (s === 'in progress' || s === 'in-progress' || s === 'en proceso' || s === 'en-proceso') return 'En proceso';
-  return 'Cerrado';
-};
 
 const getSeverityKey = (severity: string) => {
   const s = severity.toLowerCase();
@@ -64,7 +55,14 @@ const getIncidentTimes = (id: string, status: string) => {
   return { response: respStr, resolution: '—' };
 };
 
-export const IncidentList: React.FC<IncidentListProps> = ({ incidents, loading }) => {
+export const IncidentList: React.FC<IncidentListProps> = ({
+  incidents,
+  loading,
+  currentPage,
+  totalCount,
+  pageSize,
+  onPageChange,
+}) => {
   if (loading) {
     return (
       <div className="opscore-list-loading" data-testid="incidents-loading">
@@ -86,34 +84,53 @@ export const IncidentList: React.FC<IncidentListProps> = ({ incidents, loading }
     );
   }
 
+  const totalPages = Math.ceil(totalCount / pageSize) || 1;
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalCount);
+
   return (
     <div className="opscore-table-card" data-testid="incidents-list">
       <div className="opscore-table-wrapper">
         <table className="opscore-table">
           <thead>
             <tr>
-              <th>ID + OPERADOR</th>
+              <th>ID</th>
               <th>ÁREA</th>
               <th>TIPO</th>
               <th>SEVERIDAD</th>
               <th>ESTADO</th>
               <th>
                 <div className="opscore-time-header">
-                  <span>T. RESPUESTA</span>
-                  <span>T. RESOLUCIÓN</span>
+                  <span>T. RESP</span>
+                  <span>T. RES</span>
                 </div>
               </th>
+              <th>OPERADOR</th>
+              <th>TÉCNICO</th>
             </tr>
           </thead>
           <tbody>
             {incidents.map((incident) => {
               const { response, resolution } = getIncidentTimes(incident.incidentId, incident.status);
-              const opNum = incident.reportedByEmployeeId.replace(/^0+/, '') || '0';
+              
+              const formatEmployeeId = (empId?: string): string => {
+                if (!empId) return '';
+                const clean = empId.replace(/^0+/, '');
+                if (!clean) return '000';
+                return clean.padStart(3, '0');
+              };
+
+              const opName = incident.reportedByLastName || 'Operador';
+              const opIdStr = formatEmployeeId(incident.reportedByEmployeeId);
+              
+              const hasTech = !!incident.assignedToEmployeeId;
+              const techName = incident.assignedToLastName || 'Técnico';
+              const techIdStr = formatEmployeeId(incident.assignedToEmployeeId);
+
               return (
                 <tr key={incident.incidentId}>
-                  <td className="opscore-td-id-op">
+                  <td>
                     <span className="opscore-row-id">{incident.incidentId}</span>
-                    <span className="opscore-row-operator">Op. #{opNum}</span>
                   </td>
                   <td>{incident.areaName}</td>
                   <td>
@@ -138,6 +155,16 @@ export const IncidentList: React.FC<IncidentListProps> = ({ incidents, loading }
                       <span className="opscore-time-row">{resolution}</span>
                     </div>
                   </td>
+                  <td>
+                    <span>{`${opName} #${opIdStr}`}</span>
+                  </td>
+                  <td>
+                    {hasTech ? (
+                      <span>{`${techName} #${techIdStr}`}</span>
+                    ) : (
+                      <span style={{ fontStyle: 'italic', color: 'var(--colors-text-tertiary)' }}>Sin asignar</span>
+                    )}
+                  </td>
                 </tr>
               );
             })}
@@ -146,17 +173,34 @@ export const IncidentList: React.FC<IncidentListProps> = ({ incidents, loading }
       </div>
       <div className="opscore-table-pagination">
         <span className="opscore-pagination-info">
-          Mostrando {incidents.length} de {incidents.length} incidentes
+          Mostrando {totalCount === 0 ? 0 : startIndex + 1} a {endIndex} de {totalCount} incidentes
         </span>
         <div className="opscore-pagination-controls">
-          <button className="opscore-page-btn" disabled>&lt;</button>
-          <button className="opscore-page-btn active">1</button>
-          <button className="opscore-page-btn" disabled>2</button>
-          <button className="opscore-page-btn" disabled>3</button>
-          <button className="opscore-page-btn" disabled>&gt;</button>
+          <button
+            className="opscore-page-btn"
+            disabled={currentPage === 1}
+            onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
+          >
+            &lt;
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <button
+              key={page}
+              className={`opscore-page-btn${currentPage === page ? ' active' : ''}`}
+              onClick={() => onPageChange(page)}
+            >
+              {page}
+            </button>
+          ))}
+          <button
+            className="opscore-page-btn"
+            disabled={currentPage === totalPages}
+            onClick={() => onPageChange(Math.min(currentPage + 1, totalPages))}
+          >
+            &gt;
+          </button>
         </div>
       </div>
     </div>
   );
 };
-

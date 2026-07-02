@@ -141,19 +141,7 @@ public class SignalRIncidentEventPublisher(
             }
         }
 
-        IdentityRole? managerRole = await _dbContext.Roles.FirstOrDefaultAsync(r => r.Name == "Plant Manager");
-        if (managerRole != null)
-        {
-            List<string> managerIds = await _dbContext.UserRoles
-                .Where(ur => ur.RoleId == managerRole.Id)
-                .Select(ur => ur.UserId)
-                .ToListAsync();
-
-            foreach (string managerId in managerIds)
-            {
-                recipientGroups.Add($"manager_{managerId}");
-            }
-        }
+        recipientGroups.Add("managers");
 
         return recipientGroups;
     }

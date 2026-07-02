@@ -214,7 +214,7 @@ public class RegisterIntegrationTests(IntegrationTestFactory factory) : IClassFi
         Assert.Contains("Zona Norte", areaNameClaims);
         Assert.Contains("Línea 3", areaNameClaims);
         Assert.Equal("1", shiftClaim);
-        Assert.Equal("Turno mañana", shiftNameClaim);
+        Assert.Equal("Matutino", shiftNameClaim);
     }
 
     [Fact]

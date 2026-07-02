@@ -39,14 +39,14 @@ export const TechnicianDashboardScreen: React.FC<TechnicianDashboardScreenProps>
     const diffMins = Math.max(0, Math.floor(diffMs / 60000));
     
     if (diffMins < 60) {
-      return `hace ${diffMins} min`;
+      return `${diffMins} min`;
     }
     const diffHours = Math.floor(diffMins / 60);
     if (diffHours < 24) {
-      return `hace ${diffHours} h`;
+      return `${diffHours} h`;
     }
     const diffDays = Math.floor(diffHours / 24);
-    return `hace ${diffDays} d`;
+    return `${diffDays} d`;
   };
 
   const mapSeverity = (severityName: string): string => {

@@ -36,9 +36,8 @@ public static class ModelBuilderExtensions
         );
 
         builder.Entity<Shift>().HasData(
-            new Shift { Id = 1, Name = "Turno mañana", Status = "Active" },
-            new Shift { Id = 2, Name = "Turno tarde", Status = "Active" },
-            new Shift { Id = 3, Name = "Turno nocturno", Status = "Active" }
+            new Shift { Id = 1, Name = "Matutino", Status = "Active" },
+            new Shift { Id = 2, Name = "Vespertino", Status = "Active" }
         );
 
         builder.Entity<RootCauseType>().HasData(

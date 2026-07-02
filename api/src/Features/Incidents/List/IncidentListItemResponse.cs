@@ -14,4 +14,7 @@ public class IncidentListItemResponse
     public string ReportedByUserId { get; set; } = string.Empty;
     public string ReportedByEmployeeId { get; set; } = string.Empty;
     public DateTimeOffset ReportedDate { get; set; }
+    public string AssignedToEmployeeId { get; set; } = string.Empty;
+    public string ReportedByLastName { get; set; } = string.Empty;
+    public string AssignedToLastName { get; set; } = string.Empty;
 }

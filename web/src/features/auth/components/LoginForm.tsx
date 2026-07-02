@@ -17,7 +17,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -121,27 +120,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             )}
           </button>
         </div>
-      </div>
-
-      <div className="opscore-form-options">
-        <label className="opscore-checkbox-label">
-          <input
-            type="checkbox"
-            className="opscore-checkbox"
-            checked={rememberMe}
-            onChange={(e) => setRememberMe(e.target.checked)}
-            disabled={loading}
-          />
-          Recordarme
-        </label>
-        <button
-          type="button"
-          className="opscore-forgot-link"
-          onClick={(e) => e.preventDefault()}
-          disabled={loading}
-        >
-          ¿Olvidaste tu contraseña?
-        </button>
       </div>
 
       {activeError && (
