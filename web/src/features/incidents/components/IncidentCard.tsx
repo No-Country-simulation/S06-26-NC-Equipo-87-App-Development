@@ -17,6 +17,8 @@ export interface Incident {
   assignedToEmployeeId?: string;
   reportedByLastName?: string;
   assignedToLastName?: string;
+  rootCauseTypeName?: string;
+  resolutionTime?: string;
 }
 
 interface IncidentCardProps {

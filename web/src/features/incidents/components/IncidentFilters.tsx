@@ -1,6 +1,6 @@
 import React from 'react';
 import { Select } from '../../../shared/components/atoms/Select';
-import { Button } from '../../../shared/components/atoms/Button';
+import { DownloadButton } from '../../../shared/components/atoms/DownloadButton';
 
 interface IncidentFiltersProps {
   statusFilter: string;
@@ -13,6 +13,7 @@ interface IncidentFiltersProps {
   setTimeFilter: (val: string) => void;
   availableAreas: string[];
   availableSeverities: string[];
+  onDownloadCsv?: () => void;
 }
 
 export const IncidentFilters: React.FC<IncidentFiltersProps> = ({
@@ -23,11 +24,11 @@ export const IncidentFilters: React.FC<IncidentFiltersProps> = ({
   timeFilter,
   setTimeFilter,
   availableAreas,
+  onDownloadCsv,
 }) => {
   return (
     <div className="opscore-filters-container" data-testid="incident-filters">
       <Select
-        variant="dark"
         value={timeFilter}
         onChange={(e) => setTimeFilter(e.target.value)}
         pill
@@ -62,31 +63,9 @@ export const IncidentFilters: React.FC<IncidentFiltersProps> = ({
         <option value="Closed">Cerrados</option>
       </Select>
 
-      <span style={{ color: '#dcdad4', margin: '0 var(--spacing-1)', alignSelf: 'center' }}>|</span>
+      <span className="opscore-filter-divider">|</span>
 
-      <Button
-        onClick={() => window.print()}
-        variant="primary"
-        style={{
-          backgroundColor: 'var(--colors-background-dark)',
-          color: 'var(--colors-text-on-dark)',
-          border: 'none',
-          padding: '0 var(--spacing-4)',
-          borderRadius: 'var(--rounded-md)',
-          height: '38px',
-          fontSize: '13px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px'
-        }}
-      >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="7 10 12 15 17 10" />
-          <line x1="12" y1="15" x2="12" y2="3" />
-        </svg>
-        Descargar
-      </Button>
+      <DownloadButton onDownloadCsv={onDownloadCsv} />
     </div>
   );
 };

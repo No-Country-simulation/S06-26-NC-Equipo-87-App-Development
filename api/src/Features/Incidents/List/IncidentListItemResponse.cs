@@ -17,4 +17,6 @@ public class IncidentListItemResponse
     public string AssignedToEmployeeId { get; set; } = string.Empty;
     public string ReportedByLastName { get; set; } = string.Empty;
     public string AssignedToLastName { get; set; } = string.Empty;
+    public string RootCauseTypeName { get; set; } = string.Empty;
+    public string ResolutionTime { get; set; } = string.Empty;
 }

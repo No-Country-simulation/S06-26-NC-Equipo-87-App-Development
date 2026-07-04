@@ -38,7 +38,7 @@ describe('CausaRaizPage', () => {
               }
             ],
             insights: [
-              'Zona Norte concentra el 58% de las fallas mecánicas.'
+              'La Zona Norte concentra el 58% de las fallas mecánicas del período.'
             ]
           }),
         });

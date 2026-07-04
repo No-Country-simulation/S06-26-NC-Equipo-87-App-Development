@@ -83,29 +83,29 @@ public class ListIncidentsHandler(AppDbContext dbContext, IHttpContextAccessor h
         int pageSize = query.PageSize ?? 10;
         int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
 
-        List<IncidentListItemResponse> items = await incidentsQuery
+        var rawItems = await incidentsQuery
             .OrderByDescending(i => i.StatusHistories.Max(h => h.ChangedDate))
             .Skip((currentPage - 1) * pageSize)
             .Take(pageSize)
-            .Select(i => new IncidentListItemResponse
+            .Select(i => new
             {
-                IncidentId = i.IncidentId,
-                Description = i.Description,
-                AreaId = i.AreaId,
+                i.IncidentId,
+                i.Description,
+                i.AreaId,
                 AreaName = i.Area.Name,
-                IncidentTypeId = i.IncidentTypeId,
+                i.IncidentTypeId,
                 IncidentTypeName = i.IncidentType.Name,
-                SeverityTypeId = i.SeverityTypeId,
+                i.SeverityTypeId,
                 SeverityTypeName = i.SeverityType.Name,
-                Status = i.Status,
+                i.Status,
                 ReportedByUserId = i.StatusHistories
                     .OrderBy(h => h.ChangedDate)
                     .Select(h => h.ChangedByUserId)
-                    .FirstOrDefault() ?? string.Empty,
+                    .FirstOrDefault(),
                 ReportedByEmployeeId = i.StatusHistories
                     .OrderBy(h => h.ChangedDate)
                     .Select(h => h.ChangedByUser.EmployeeId)
-                    .FirstOrDefault() ?? string.Empty,
+                    .FirstOrDefault(),
                 ReportedDate = i.StatusHistories
                     .OrderBy(h => h.ChangedDate)
                     .Select(h => h.ChangedDate)
@@ -114,10 +114,53 @@ public class ListIncidentsHandler(AppDbContext dbContext, IHttpContextAccessor h
                 ReportedByLastName = i.StatusHistories
                     .OrderBy(h => h.ChangedDate)
                     .Select(h => h.ChangedByUser.LastName)
-                    .FirstOrDefault() ?? string.Empty,
-                AssignedToLastName = i.AssignedToUser != null ? i.AssignedToUser.LastName : string.Empty
+                    .FirstOrDefault(),
+                AssignedToLastName = i.AssignedToUser != null ? i.AssignedToUser.LastName : string.Empty,
+                RootCauseTypeName = i.RootCauseType != null ? i.RootCauseType.Name : "Causa no determinada",
+                InProgressDate = i.StatusHistories
+                    .Where(h => h.NewStatus == "In-Progress")
+                    .OrderBy(h => h.ChangedDate)
+                    .Select(h => h.ChangedDate)
+                    .FirstOrDefault(),
+                ClosedDate = i.StatusHistories
+                    .Where(h => h.NewStatus == "Closed")
+                    .OrderBy(h => h.ChangedDate)
+                    .Select(h => h.ChangedDate)
+                    .FirstOrDefault()
             })
             .ToListAsync();
+
+        List<IncidentListItemResponse> items = rawItems.Select(r =>
+        {
+            string resolutionTime = "-";
+            if (r.InProgressDate != default && r.ClosedDate != default && r.ClosedDate > r.InProgressDate)
+            {
+                TimeSpan duration = r.ClosedDate - r.InProgressDate;
+                int hours = (int)duration.TotalHours;
+                int minutes = duration.Minutes;
+                resolutionTime = $"{hours:D2}:{minutes:D2}";
+            }
+            return new IncidentListItemResponse
+            {
+                IncidentId = r.IncidentId,
+                Description = r.Description,
+                AreaId = r.AreaId,
+                AreaName = r.AreaName,
+                IncidentTypeId = r.IncidentTypeId,
+                IncidentTypeName = r.IncidentTypeName,
+                SeverityTypeId = r.SeverityTypeId,
+                SeverityTypeName = r.SeverityTypeName,
+                Status = r.Status,
+                ReportedByUserId = r.ReportedByUserId ?? string.Empty,
+                ReportedByEmployeeId = r.ReportedByEmployeeId ?? string.Empty,
+                ReportedDate = r.ReportedDate,
+                AssignedToEmployeeId = r.AssignedToEmployeeId,
+                ReportedByLastName = r.ReportedByLastName ?? string.Empty,
+                AssignedToLastName = r.AssignedToLastName,
+                RootCauseTypeName = r.RootCauseTypeName,
+                ResolutionTime = resolutionTime
+            };
+        }).ToList();
 
         return new IncidentListResponse
         {

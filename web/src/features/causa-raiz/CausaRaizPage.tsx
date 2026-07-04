@@ -6,6 +6,8 @@ import { IncidentsByArea } from './components/IncidentsByArea';
 import { FailsTrend } from './components/FailsTrend';
 import { TechnicianPerformanceTable } from './components/TechnicianPerformanceTable';
 import { useWebCausaRaizStore } from './stores/useWebCausaRaizStore';
+import { useWebIncidentStore } from '../incidents/stores/useWebIncidentStore';
+import { downloadCsv } from '../../shared/utils/csv';
 
 export const CausaRaizPage: React.FC = () => {
   const {
@@ -27,6 +29,23 @@ export const CausaRaizPage: React.FC = () => {
     loadAnalyticalData();
   }, [loadAnalyticalData, timeFilter, areaFilter]);
 
+  const handleDownloadCsv = async () => {
+    const incidents = await useWebIncidentStore.getState().fetchAllIncidentsForExport({
+      status: 'All',
+      area: areaFilter,
+      severity: 'All',
+      time: timeFilter
+    });
+    const mapped = incidents.map(i => ({
+      'ID': i.incidentId,
+      'Tipo': i.incidentTypeName,
+      'Causa raíz': i.rootCauseTypeName || 'Causa no determinada',
+      'Técnico': i.assignedToLastName || '-',
+      'Tiempo de resolución': i.resolutionTime || '-'
+    }));
+    downloadCsv(mapped, 'causa_raiz_incidentes.csv');
+  };
+
   return (
     <>
       <CausaRaizHeader
@@ -35,6 +54,7 @@ export const CausaRaizPage: React.FC = () => {
         areaFilter={areaFilter}
         onAreaFilterChange={setAreaFilter}
         availableAreas={availableAreas}
+        onDownloadCsv={handleDownloadCsv}
       />
       <AlertBanner insights={data?.insights} showRecommendation />
       

@@ -131,7 +131,7 @@ public class GetOperationalDashboardHandler(AppDbContext dbContext)
         int highSeverityLastWeekCount = lastWeekIncidents
             .Count(i => i.SeverityType.Name.Equals("Alto", StringComparison.OrdinalIgnoreCase));
 
-        List<DailyIncidentTrendDto> dailyTrend = GetDailyIncidentTrend(weeklyIncidents, trendReferenceDate);
+        List<DailyIncidentTrendDto> dailyTrend = GetDailyIncidentTrend(weeklyIncidents);
         List<IncidentTypeDistributionDto> typeDistribution = GetIncidentTypeDistribution(weeklyIncidents, allIncidentTypeNames);
         List<ShiftDistributionDto> shiftDistribution = GetShiftDistribution(weeklyIncidents, allShiftNames);
         List<RecentCriticalIncidentDto> recentCritical = GetRecentCriticalIncidents(weeklyIncidents);
@@ -191,21 +191,28 @@ public class GetOperationalDashboardHandler(AppDbContext dbContext)
         return $"{hours:D2}:{minutes:D2}";
     }
 
-    private static List<DailyIncidentTrendDto> GetDailyIncidentTrend(List<Incident> weeklyIncidents, DateTimeOffset today)
+    private static List<DailyIncidentTrendDto> GetDailyIncidentTrend(List<Incident> periodIncidents)
     {
         List<DailyIncidentTrendDto> trend = new List<DailyIncidentTrendDto>();
-
-        for (int i = 6; i >= 0; i--)
+        DayOfWeek[] daysOrder =
         {
-            var date = today.AddDays(-i);
-            string dayLabel = GetSpanishDayLabel(date.DayOfWeek);
+            DayOfWeek.Monday,
+            DayOfWeek.Tuesday,
+            DayOfWeek.Wednesday,
+            DayOfWeek.Thursday,
+            DayOfWeek.Friday,
+            DayOfWeek.Saturday,
+            DayOfWeek.Sunday
+        };
 
-            int count = weeklyIncidents
-                .Count(inc => GetReportedDate(inc).UtcDateTime.Date == date.UtcDateTime.Date);
+        foreach (var day in daysOrder)
+        {
+            int count = periodIncidents
+                .Count(inc => GetReportedDate(inc).UtcDateTime.DayOfWeek == day);
 
             trend.Add(new DailyIncidentTrendDto
             {
-                Day = dayLabel,
+                Day = GetSpanishDayLabel(day),
                 Value = count
             });
         }

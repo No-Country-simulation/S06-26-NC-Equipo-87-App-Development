@@ -298,6 +298,8 @@ public class GetAnalyticalDashboardHandler(AppDbContext dbContext)
             .GroupBy(i => i.IncidentType.Name)
             .ToList();
 
+        List<(double Percentage, string InsightText)> concentrationInsights = [];
+
         foreach (IGrouping<string, Incident> group in incidentsByType)
         {
             int totalForType = group.Count();
@@ -333,9 +335,18 @@ public class GetAnalyticalDashboardHandler(AppDbContext dbContext)
                         "calidad" => "de los",
                         _ => "de los"
                     };
-                    insights.Add($"{topArea.Key} concentra el {roundedPct}% {connector} {phrase}.");
+                    string article = topArea.Key.Equals("Almacén", StringComparison.OrdinalIgnoreCase) ? "El" : "La";
+                    concentrationInsights.Add((roundedPct, $"{article} {topArea.Key} concentra el {roundedPct}% {connector} {phrase} del período."));
                 }
             }
+        }
+
+        if (concentrationInsights.Count > 0)
+        {
+            var topConcentration = concentrationInsights
+                .OrderByDescending(x => x.Percentage)
+                .First();
+            insights.Add(topConcentration.InsightText);
         }
 
         List<TimeSpan> allDurations = incidents
@@ -350,6 +361,8 @@ public class GetAnalyticalDashboardHandler(AppDbContext dbContext)
             double teamAverageMinutes = allDurations.Average(d => d.TotalMinutes);
             if (teamAverageMinutes > 0)
             {
+                List<(double Ratio, string InsightText)> performanceInsights = [];
+
                 foreach (TechnicianPerformanceDto tech in techPerformance)
                 {
                     if (tech.TicketsResolved == 0 || string.IsNullOrEmpty(tech.AvgResolutionTime) || tech.AvgResolutionTime == "-")
@@ -364,9 +377,17 @@ public class GetAnalyticalDashboardHandler(AppDbContext dbContext)
                         double ratio = techAvgMinutes / teamAverageMinutes;
                         if (ratio >= 2.0)
                         {
-                            insights.Add($"{tech.Name} tiene un tiempo de resolución {ratio:0.0}x mayor al promedio del equipo.");
+                            performanceInsights.Add((ratio, $"{tech.Name} tiene un tiempo de resolución {ratio:0.0}x mayor al promedio del equipo."));
                         }
                     }
+                }
+
+                if (performanceInsights.Count > 0)
+                {
+                    var topPerformance = performanceInsights
+                        .OrderByDescending(x => x.Ratio)
+                        .First();
+                    insights.Add(topPerformance.InsightText);
                 }
             }
         }

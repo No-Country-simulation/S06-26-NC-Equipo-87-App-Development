@@ -8,9 +8,10 @@ import { useWebIncidentStore } from '../../../features/incidents/stores/useWebIn
 interface SidebarProps {
   user: Record<string, unknown> | null;
   onLogout: () => void;
+  onClose?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, onClose }) => {
   const { openCount } = useWebIncidentStore();
   const [hash, setHash] = useState(window.location.hash);
 
@@ -44,9 +45,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
   return (
     <aside className="opscore-sidebar">
       <div className="opscore-sidebar-top">
-        <div className="opscore-sidebar-brand">
-          <Logo size={22} color="#E8E6DF" />
-          <span className="opscore-sidebar-brand-text">OpsCore</span>
+        <div className="opscore-sidebar-brand" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', boxSizing: 'border-box' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Logo size={22} color="#E8E6DF" />
+            <span className="opscore-sidebar-brand-text">OpsCore</span>
+          </div>
+          {onClose && (
+            <button onClick={onClose} className="opscore-sidebar-close-btn" aria-label="Cerrar menú">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          )}
         </div>
         <nav className="opscore-sidebar-nav">
           {canAccessDashboard && (
@@ -54,6 +65,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
               href="#dashboard-operational"
               className={`opscore-sidebar-nav-item ${isDashboardActive ? 'active' : ''}`}
               style={{ textDecoration: 'none' }}
+              onClick={onClose}
             >
               <BarChartIcon className="opscore-nav-icon" size={18} />
               <span>Dashboard</span>
@@ -64,6 +76,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
               href="#dashboard-analytical"
               className={`opscore-sidebar-nav-item ${isCausaRaizActive ? 'active' : ''}`}
               style={{ textDecoration: 'none' }}
+              onClick={onClose}
             >
               <ScatterChartIcon className="opscore-nav-icon" size={18} />
               <span>Causa raíz</span>
@@ -73,6 +86,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
             href="#tickets"
             className={`opscore-sidebar-nav-item ${isTicketsActive ? 'active' : ''}`}
             style={{ textDecoration: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', boxSizing: 'border-box' }}
+            onClick={onClose}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <ClipboardIcon className="opscore-nav-icon" size={18} />

@@ -4,6 +4,7 @@ import { Button } from '../../shared/components/atoms/Button';
 import { IncidentFilters } from './components/IncidentFilters';
 import { IncidentList } from './components/IncidentList';
 import { useWebIncidentStore } from './stores/useWebIncidentStore';
+import { downloadCsv } from '../../shared/utils/csv';
 
 interface IncidentListScreenProps {
   user: Record<string, unknown> | null;
@@ -33,6 +34,7 @@ export const IncidentListScreen: React.FC<IncidentListScreenProps> = () => {
     setCurrentPage,
     fetchAreas,
     fetchIncidents,
+    fetchAllIncidentsForExport,
   } = useWebIncidentStore();
 
   useEffect(() => {
@@ -43,11 +45,20 @@ export const IncidentListScreen: React.FC<IncidentListScreenProps> = () => {
     fetchIncidents();
   }, [fetchIncidents, currentPage, statusFilter, areaFilter, severityFilter, timeFilter]);
 
+  const handleDownloadCsv = async () => {
+    const allIncidents = await fetchAllIncidentsForExport();
+    if (allIncidents && allIncidents.length > 0) {
+      downloadCsv(allIncidents, 'incidentes.csv');
+    }
+  };
+
   return (
     <>
       <div className="opscore-dashboard-header">
-        <div className="opscore-header-top-row">
-          <h1 className="opscore-dashboard-title">Todos los incidentes</h1>
+        <header className="opscore-page-header">
+          <Typography variant="display" className="opscore-page-title">
+            Todos los incidentes
+          </Typography>
           <IncidentFilters
             statusFilter={statusFilter}
             setStatusFilter={setStatusFilter}
@@ -59,23 +70,24 @@ export const IncidentListScreen: React.FC<IncidentListScreenProps> = () => {
             setTimeFilter={setTimeFilter}
             availableAreas={availableAreas}
             availableSeverities={[]}
+            onDownloadCsv={handleDownloadCsv}
           />
-        </div>
+        </header>
         <div className="opscore-metrics-summary">
           <span className="opscore-metric-total">{openCount + assignedCount + inProgressCount + closedCount} incidentes totales</span>
-          <span style={{ color: '#dcdad4' }}>|</span>
+          <span className="opscore-metric-divider">|</span>
           <span className="opscore-metric-dot opscore-metric-open">
             <span style={{ color: 'var(--colors-status-open)' }}>●</span> {openCount} abiertos
           </span>
-          <span style={{ color: '#dcdad4' }}>|</span>
+          <span className="opscore-metric-divider">|</span>
           <span className="opscore-metric-dot opscore-metric-assigned">
             <span style={{ color: 'var(--colors-status-assigned)' }}>●</span> {assignedCount} asignados
           </span>
-          <span style={{ color: '#dcdad4' }}>|</span>
+          <span className="opscore-metric-divider">|</span>
           <span className="opscore-metric-dot opscore-metric-in-progress">
             <span style={{ color: 'var(--colors-status-in-progress)' }}>●</span> {inProgressCount} en proceso
           </span>
-          <span style={{ color: '#dcdad4' }}>|</span>
+          <span className="opscore-metric-divider">|</span>
           <span className="opscore-metric-dot opscore-metric-closed">
             <span style={{ color: 'var(--colors-status-closed)' }}>●</span> {closedCount} cerrados
           </span>

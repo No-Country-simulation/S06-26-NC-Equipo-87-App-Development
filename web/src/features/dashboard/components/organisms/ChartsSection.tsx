@@ -15,7 +15,7 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
   incidentsByShift,
 }) => {
   return (
-    <div style={{ display: 'flex', gap: 'var(--spacing-4)', flexWrap: 'wrap' }}>
+    <div className="opscore-charts-section" style={{ display: 'flex', gap: 'var(--spacing-4)', flexWrap: 'wrap' }}>
       <BarChartWidget
         title="Incidentes por día"
         data={incidentsByDay}

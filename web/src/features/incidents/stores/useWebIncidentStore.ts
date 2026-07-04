@@ -40,6 +40,7 @@ interface IncidentState {
 
   fetchAreas: () => Promise<void>;
   fetchIncidents: () => Promise<void>;
+  fetchAllIncidentsForExport: (filters?: { status?: string; area?: string; severity?: string; time?: string }) => Promise<Incident[]>;
   connection: HubConnection | null;
   startSignalR: () => Promise<void>;
   stopSignalR: () => Promise<void>;
@@ -131,6 +132,39 @@ export const useWebIncidentStore = create<IncidentState>((set, get) => ({
       set({ error: apiErr.message || 'Error al cargar incidentes.' });
     } finally {
       set({ loading: false });
+    }
+  },
+
+  fetchAllIncidentsForExport: async (filters?: { status?: string; area?: string; severity?: string; time?: string }): Promise<Incident[]> => {
+    const state = get();
+    const status = filters?.status ?? state.statusFilter;
+    const area = filters?.area ?? state.areaFilter;
+    const severity = filters?.severity ?? state.severityFilter;
+    const time = filters?.time ?? state.timeFilter;
+
+    try {
+      const params: Record<string, string> = {
+        page: '1',
+        pageSize: '10000',
+        status: status,
+        area: area,
+        severity: severity,
+      };
+
+      if (time === 'week' || time === 'current') {
+        params.since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      } else if (time === 'month') {
+        params.since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      } else if (time === 'year') {
+        params.since = new Date(new Date().getFullYear(), 0, 1).toISOString();
+      }
+
+      const queryParams = new URLSearchParams(params);
+      const data = await getRequest<IncidentListResponse>(`/api/incidents?${queryParams.toString()}`);
+      return data.items || [];
+    } catch (err: unknown) {
+      console.error(err);
+      return [];
     }
   },
 

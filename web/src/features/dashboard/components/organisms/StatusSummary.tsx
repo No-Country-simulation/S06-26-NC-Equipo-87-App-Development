@@ -18,6 +18,7 @@ export const StatusSummary: React.FC<StatusSummaryProps> = ({ counts }) => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'flex-start',
+      flexWrap: 'wrap',
       backgroundColor: 'var(--colors-surface-card)',
       border: '1.25px solid #dcdad4',
       borderRadius: 'var(--rounded-md)',

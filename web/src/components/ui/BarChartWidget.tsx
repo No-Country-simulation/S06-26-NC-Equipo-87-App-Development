@@ -15,7 +15,7 @@ interface BarChartWidgetProps<T> {
   data: T[];
   xAxisKey: string;
   yAxisKey: string;
-  yAxisDomain?: [number, number];
+  yAxisDomain?: [any, any];
   barSize?: number;
   style?: React.CSSProperties;
 }

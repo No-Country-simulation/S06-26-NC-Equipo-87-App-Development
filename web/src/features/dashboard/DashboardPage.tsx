@@ -6,6 +6,8 @@ import { ChartsSection } from './components/organisms/ChartsSection';
 import { IncidentsTable } from './components/organisms/IncidentsTable';
 import { AlertBanner } from '../../shared/components/molecules/AlertBanner';
 import { useWebDashboardStore } from './stores/useWebDashboardStore';
+import { useWebIncidentStore } from '../incidents/stores/useWebIncidentStore';
+import { downloadCsv } from '../../shared/utils/csv';
 
 const ticketIcon = (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -117,9 +119,25 @@ export const DashboardPage: React.FC = () => {
   const mttrTrendDirection = (curr: number, prev: number): 'up' | 'down' =>
     curr <= prev ? 'down' : 'up';
 
+  const handleDownloadCsv = async () => {
+    const allIncidents = await useWebIncidentStore.getState().fetchAllIncidentsForExport({
+      status: 'All',
+      area: 'All',
+      severity: 'All',
+      time: timeFilter
+    });
+    if (allIncidents && allIncidents.length > 0) {
+      downloadCsv(allIncidents, 'incidentes_dashboard.csv');
+    }
+  };
+
   return (
     <>
-      <DashboardHeader timeFilter={timeFilter} onTimeFilterChange={setTimeFilter} />
+      <DashboardHeader
+        timeFilter={timeFilter}
+        onTimeFilterChange={setTimeFilter}
+        onDownloadCsv={handleDownloadCsv}
+      />
       
       <AlertBanner insights={data?.insights} />
 
