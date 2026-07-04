@@ -1,4 +1,4 @@
-export const downloadCsv = (data: Record<string, unknown>[], filename: string) => {
+export const downloadCsv = <T extends object>(data: T[], filename: string) => {
   if (!data || data.length === 0) {
     return;
   }
@@ -6,7 +6,7 @@ export const downloadCsv = (data: Record<string, unknown>[], filename: string) =
   const rows = data.map((row) =>
     headers
       .map((header) => {
-        const val = row[header];
+        const val = (row as Record<string, unknown>)[header];
         const stringVal = val === null || val === undefined ? '' : String(val);
         return `"${stringVal.replace(/"/g, '""')}"`;
       })

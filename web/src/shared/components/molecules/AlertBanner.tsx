@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useReducer } from 'react';
 import { Typography } from '../atoms/Typography';
 import { WarningIcon } from '../atoms/WarningIcon';
 
@@ -8,22 +8,35 @@ interface AlertBannerProps {
   style?: React.CSSProperties;
 }
 
+interface DismissState {
+  insightsSnapshot: string[] | undefined;
+  dismissed: number[];
+}
+
+function dismissReducer(state: DismissState, action: { type: 'dismiss'; index: number }): DismissState {
+  return { ...state, dismissed: [...state.dismissed, action.index] };
+}
+
+function getDismissedIndices(state: DismissState, currentInsights: string[] | undefined): DismissState {
+  if (state.insightsSnapshot === currentInsights) {
+    return state;
+  }
+  return { insightsSnapshot: currentInsights, dismissed: [] };
+}
+
 export const AlertBanner: React.FC<AlertBannerProps> = ({
   insights,
   showRecommendation = false,
   style,
 }) => {
-  const [dismissedIndices, setDismissedIndices] = useState<number[]>([]);
-
-  useEffect(() => {
-    setDismissedIndices([]);
-  }, [insights]);
+  const [rawState, dispatch] = useReducer(dismissReducer, { insightsSnapshot: insights, dismissed: [] });
+  const state = getDismissedIndices(rawState, insights);
 
   if (!insights || insights.length === 0) {
     return null;
   }
 
-  const visibleInsights = insights.filter((_, idx) => !dismissedIndices.includes(idx));
+  const visibleInsights = insights.filter((_, idx) => !state.dismissed.includes(idx));
 
   if (visibleInsights.length === 0) {
     return null;
@@ -40,7 +53,7 @@ export const AlertBanner: React.FC<AlertBannerProps> = ({
       }}
     >
       {insights.map((insight, idx) => {
-        if (dismissedIndices.includes(idx)) {
+        if (state.dismissed.includes(idx)) {
           return null;
         }
         return (
@@ -74,7 +87,7 @@ export const AlertBanner: React.FC<AlertBannerProps> = ({
               </Typography>
             </div>
             <button
-              onClick={() => setDismissedIndices((prev) => [...prev, idx])}
+              onClick={() => dispatch({ type: 'dismiss', index: idx })}
               aria-label="Dismiss alert"
               style={{
                 marginLeft: 'var(--spacing-2)',

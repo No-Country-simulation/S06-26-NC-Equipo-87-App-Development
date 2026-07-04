@@ -23,9 +23,10 @@ export const Select: React.FC<SelectProps> = ({
   const options: { value: string; label: string }[] = [];
   React.Children.forEach(children, (child) => {
     if (React.isValidElement(child) && child.type === 'option') {
+      const optionProps = child.props as { value?: string; children?: React.ReactNode };
       options.push({
-        value: String(child.props.value ?? ''),
-        label: String(child.props.children ?? '')
+        value: String(optionProps.value ?? ''),
+        label: String(optionProps.children ?? '')
       });
     }
   });
