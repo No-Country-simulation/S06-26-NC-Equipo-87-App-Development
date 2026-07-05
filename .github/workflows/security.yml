@@ -29,16 +29,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
-  # semgrep:
-  #   name: Semgrep SAST Scan
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     contents: read
-  #   container:
-  #     image: semgrep/semgrep
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
+  semgrep:
+    name: Semgrep SAST Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    container:
+      image: semgrep/semgrep
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  #     - name: Run Semgrep Scan
-  #       run: semgrep ci --config=auto
+      - name: Run Semgrep Scan
+        run: semgrep ci --config=auto
