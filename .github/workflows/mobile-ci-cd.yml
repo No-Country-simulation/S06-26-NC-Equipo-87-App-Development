@@ -108,7 +108,7 @@ jobs:
           node-version: '22.x'
 
       - name: Setup Java
-        uses: actions/setup-java@403061214346e932b7194f475b630018a4a589f8 # v4.5.0
+        uses: actions/setup-java@42471b9c93ed7a518063852077e68e0d7c355523 # v4.5.0
         with:
           distribution: 'zulu'
           java-version: '17'
