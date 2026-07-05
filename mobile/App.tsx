@@ -25,6 +25,18 @@ import { useIncidentStore } from './src/features/incidents/stores/useIncidentSto
 import designTokens from './src/shared/theme/designTokens.json';
 
 import { decodeJwt } from './src/shared/auth/jwtDecoder';
+import * as Notifications from 'expo-notifications';
+import { registerForPushNotificationsAsync } from './src/shared/notifications/pushNotificationHelper';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: false,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+    shouldShowBanner: false,
+    shouldShowList: false,
+  }),
+});
 
 interface IncidentFormState {
   areaId: number;
@@ -64,6 +76,45 @@ export default function App() {
     }
     return 'home';
   };
+
+  const navigateToIncidentDetail = (tokenStr: string | null, incidentId: string) => {
+    if (!tokenStr) return;
+    try {
+      const decoded = decodeJwt(tokenStr);
+      if (decoded) {
+        const role = decoded['role'] || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+        setSelectedIncidentId(incidentId);
+        if (role === 'Supervisor') {
+          setCurrentScreen('supervisor-ticket-detail');
+        } else if (role === 'Technician') {
+          setCurrentScreen('technician-ticket-detail');
+        } else {
+          setCurrentScreen('incident-detail');
+        }
+      }
+    } catch (err) {
+      console.error('Failed to navigate from notification:', err);
+    }
+  };
+
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+      const incidentId = response.notification.request.content.data?.incidentId as string | undefined;
+      if (incidentId) {
+        navigateToIncidentDetail(token, incidentId);
+      }
+    });
+
+    if (token) {
+      registerForPushNotificationsAsync().catch(err => {
+        console.error('Failed to register push token on launch:', err);
+      });
+    }
+
+    return () => {
+      subscription.remove();
+    };
+  }, [token]);
 
   useEffect(() => {
     const checkToken = async () => {

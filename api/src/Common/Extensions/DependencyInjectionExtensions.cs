@@ -96,6 +96,10 @@ public static class DependencyInjectionExtensions
         services.AddScoped<GetOperationalDashboardHandler>();
         services.AddScoped<GetAnalyticalDashboardHandler>();
         services.AddValidatorsFromAssemblyContaining<RegisterCommandValidator>();
+
+        services.AddScoped<api.Features.Authentication.UpdatePushToken.UpdatePushTokenHandler>();
+        services.AddHttpClient<IExpoPushService, ExpoPushService>();
+
         return services;
     }
 }
