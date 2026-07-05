@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
 import { API_BASE_URL, getRequest, type ApiError } from '../../../shared/api/apiClient';
+import { getCachedAreas } from '../../../shared/api/areasCache';
 import { getToken } from '../../../shared/auth/tokenService';
 import { type Incident } from '../components/IncidentCard';
 
@@ -90,8 +91,8 @@ export const useWebIncidentStore = create<IncidentState>((set, get) => ({
 
   fetchAreas: async () => {
     try {
-      const data = await getRequest<{ name: string }[]>('/api/areas');
-      set({ availableAreas: data.map((a) => a.name) });
+      const data = await getCachedAreas();
+      set({ availableAreas: data });
     } catch (err: unknown) {
       console.error(err);
     }

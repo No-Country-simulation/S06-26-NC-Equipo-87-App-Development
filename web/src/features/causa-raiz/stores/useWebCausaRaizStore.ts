@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { fetchAnalyticalDashboard, type AnalyticalDashboardData } from '../analyticalDashboardApi';
-import { getRequest } from '../../../shared/api/apiClient';
+import { getCachedAreas } from '../../../shared/api/areasCache';
 
 interface CausaRaizState {
   data: AnalyticalDashboardData | null;
@@ -36,8 +36,8 @@ export const useWebCausaRaizStore = create<CausaRaizState>((set, get) => ({
 
   loadAreas: async () => {
     try {
-      const res = await getRequest<{ name: string }[]>('/api/areas');
-      set({ availableAreas: res.map((a) => a.name) });
+      const res = await getCachedAreas();
+      set({ availableAreas: res });
     } catch (err: unknown) {
       console.error(err);
     }
