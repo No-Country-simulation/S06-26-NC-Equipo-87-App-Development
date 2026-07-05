@@ -53,7 +53,7 @@ interface IncidentState {
   loading: boolean;
   error: string | null;
   connection: HubConnection | null;
-  fetchOperatorIncidents: (userId: string, sinceDate: string) => Promise<BackendIncidentDetail[]>;
+  fetchOperatorIncidents: (userId: string) => Promise<BackendIncidentDetail[]>;
   fetchSupervisorIncidents: () => Promise<BackendIncidentDetail[]>;
   fetchIncidentDetail: (incidentId: string) => Promise<BackendIncidentDetail>;
   createIncident: (incidentData: {
@@ -79,11 +79,12 @@ export const useIncidentStore = create<IncidentState>((set) => ({
   error: null,
   connection: null,
 
-  fetchOperatorIncidents: async (userId: string, sinceDate: string) => {
+  fetchOperatorIncidents: async (userId: string) => {
     set({ loading: true, error: null });
     try {
+      const sinceDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const response = await getRequest<BackendIncidentListResponse>(
-        `/api/incidents?reportedByUserId=${encodeURIComponent(userId)}&since=${encodeURIComponent(sinceDate)}`
+        `/api/incidents?reportedByUserId=${encodeURIComponent(userId)}&since=${encodeURIComponent(sinceDate)}&pageSize=10000`
       );
       set({ incidents: response.items, loading: false });
       return response.items;
@@ -99,7 +100,10 @@ export const useIncidentStore = create<IncidentState>((set) => ({
   fetchSupervisorIncidents: async () => {
     set({ loading: true, error: null });
     try {
-      const response = await getRequest<BackendIncidentListResponse>('/api/incidents');
+      const sinceDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const response = await getRequest<BackendIncidentListResponse>(
+        `/api/incidents?since=${encodeURIComponent(sinceDate)}&pageSize=10000`
+      );
       set({ incidents: response.items, loading: false });
       return response.items;
     } catch (err: unknown) {
