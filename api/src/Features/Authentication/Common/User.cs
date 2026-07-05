@@ -10,6 +10,7 @@ public class User : IdentityUser
     public string LastName { get; set; } = string.Empty;
     public string EmployeeId { get; set; } = string.Empty;
     public string PinHash { get; set; } = string.Empty;
+    public string? ExpoPushToken { get; set; }
     public ICollection<UserArea> UserAreas { get; set; } = new List<UserArea>();
     public int? ShiftId { get; set; }
     public Shift? Shift { get; set; }

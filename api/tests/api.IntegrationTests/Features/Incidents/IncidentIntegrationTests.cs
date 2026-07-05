@@ -218,7 +218,9 @@ public class IncidentIntegrationTests(IntegrationTestFactory factory) : IClassFi
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
-        var listResult = await listResponse.Content.ReadFromJsonAsync<List<IncidentListItemResponse>>();
+        var envelopeResult = await listResponse.Content.ReadFromJsonAsync<IncidentListResponse>();
+        Assert.NotNull(envelopeResult);
+        var listResult = envelopeResult.Items;
         Assert.NotNull(listResult);
         Assert.Contains(listResult, x => x.IncidentId == result1.IncidentId);
         Assert.Contains(listResult, x => x.IncidentId == result2.IncidentId);
@@ -293,7 +295,9 @@ public class IncidentIntegrationTests(IntegrationTestFactory factory) : IClassFi
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
-        var listResult = await listResponse.Content.ReadFromJsonAsync<List<IncidentListItemResponse>>();
+        var envelopeResult = await listResponse.Content.ReadFromJsonAsync<IncidentListResponse>();
+        Assert.NotNull(envelopeResult);
+        var listResult = envelopeResult.Items;
         Assert.NotNull(listResult);
         Assert.Contains(listResult, x => x.IncidentId == resultRecent.IncidentId);
         Assert.DoesNotContain(listResult, x => x.IncidentId == resultOld.IncidentId);
@@ -374,7 +378,9 @@ public class IncidentIntegrationTests(IntegrationTestFactory factory) : IClassFi
         HttpRequestMessage op1Request = new HttpRequestMessage(HttpMethod.Get, "/api/incidents");
         op1Request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", op1Token);
         HttpResponseMessage op1Response = await _client.SendAsync(op1Request);
-        List<IncidentListItemResponse>? op1Result = await op1Response.Content.ReadFromJsonAsync<List<IncidentListItemResponse>>();
+        var op1Envelope = await op1Response.Content.ReadFromJsonAsync<IncidentListResponse>();
+        Assert.NotNull(op1Envelope);
+        var op1Result = op1Envelope.Items;
         Assert.NotNull(op1Result);
         Assert.Contains(op1Result, x => x.IncidentId == incident1.IncidentId);
         Assert.DoesNotContain(op1Result, x => x.IncidentId == incident2.IncidentId);
@@ -383,7 +389,9 @@ public class IncidentIntegrationTests(IntegrationTestFactory factory) : IClassFi
         HttpRequestMessage sup1Request = new HttpRequestMessage(HttpMethod.Get, "/api/incidents");
         sup1Request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", sup1Token);
         HttpResponseMessage sup1Response = await _client.SendAsync(sup1Request);
-        List<IncidentListItemResponse>? sup1Result = await sup1Response.Content.ReadFromJsonAsync<List<IncidentListItemResponse>>();
+        var sup1Envelope = await sup1Response.Content.ReadFromJsonAsync<IncidentListResponse>();
+        Assert.NotNull(sup1Envelope);
+        var sup1Result = sup1Envelope.Items;
         Assert.NotNull(sup1Result);
         Assert.Contains(sup1Result, x => x.IncidentId == incident1.IncidentId);
         Assert.DoesNotContain(sup1Result, x => x.IncidentId == incident2.IncidentId);
@@ -392,7 +400,9 @@ public class IncidentIntegrationTests(IntegrationTestFactory factory) : IClassFi
         HttpRequestMessage sup2Request = new HttpRequestMessage(HttpMethod.Get, "/api/incidents");
         sup2Request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", sup2Token);
         HttpResponseMessage sup2Response = await _client.SendAsync(sup2Request);
-        List<IncidentListItemResponse>? sup2Result = await sup2Response.Content.ReadFromJsonAsync<List<IncidentListItemResponse>>();
+        var sup2Envelope = await sup2Response.Content.ReadFromJsonAsync<IncidentListResponse>();
+        Assert.NotNull(sup2Envelope);
+        var sup2Result = sup2Envelope.Items;
         Assert.NotNull(sup2Result);
         Assert.Empty(sup2Result);
 
@@ -400,7 +410,9 @@ public class IncidentIntegrationTests(IntegrationTestFactory factory) : IClassFi
         HttpRequestMessage techRequest = new HttpRequestMessage(HttpMethod.Get, "/api/incidents");
         techRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", techToken);
         HttpResponseMessage techResponse = await _client.SendAsync(techRequest);
-        List<IncidentListItemResponse>? techResult = await techResponse.Content.ReadFromJsonAsync<List<IncidentListItemResponse>>();
+        var techEnvelope = await techResponse.Content.ReadFromJsonAsync<IncidentListResponse>();
+        Assert.NotNull(techEnvelope);
+        var techResult = techEnvelope.Items;
         Assert.NotNull(techResult);
         Assert.Contains(techResult, x => x.IncidentId == incident1.IncidentId);
         Assert.DoesNotContain(techResult, x => x.IncidentId == incident2.IncidentId);
@@ -409,7 +421,9 @@ public class IncidentIntegrationTests(IntegrationTestFactory factory) : IClassFi
         HttpRequestMessage managerRequest = new HttpRequestMessage(HttpMethod.Get, "/api/incidents");
         managerRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", managerToken);
         HttpResponseMessage managerResponse = await _client.SendAsync(managerRequest);
-        List<IncidentListItemResponse>? managerResult = await managerResponse.Content.ReadFromJsonAsync<List<IncidentListItemResponse>>();
+        var managerEnvelope = await managerResponse.Content.ReadFromJsonAsync<IncidentListResponse>();
+        Assert.NotNull(managerEnvelope);
+        var managerResult = managerEnvelope.Items;
         Assert.NotNull(managerResult);
         Assert.Contains(managerResult, x => x.IncidentId == incident1.IncidentId);
         Assert.Contains(managerResult, x => x.IncidentId == incident2.IncidentId);
@@ -557,7 +571,10 @@ public class IncidentIntegrationTests(IntegrationTestFactory factory) : IClassFi
         HttpRequestMessage createReq = new HttpRequestMessage(HttpMethod.Post, "/api/incidents") { Content = JsonContent.Create(cmd) };
         createReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", supervisorToken);
         HttpResponseMessage createRes = await _client.SendAsync(createReq);
-        CreateIncidentResponse? incident = await createRes.Content.ReadFromJsonAsync<CreateIncidentResponse>();
+        string resString = await createRes.Content.ReadAsStringAsync();
+        Console.WriteLine($"DEBUG RESPONSE: {resString}");
+        CreateIncidentResponse? incident = System.Text.Json.JsonSerializer.Deserialize<CreateIncidentResponse>(resString, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
         Assert.NotNull(incident);
 
         // Assign to technician and set In-Progress

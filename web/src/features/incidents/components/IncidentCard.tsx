@@ -14,6 +14,11 @@ export interface Incident {
   reportedByUserId: string;
   reportedByEmployeeId: string;
   reportedDate: string;
+  assignedToEmployeeId?: string;
+  reportedByLastName?: string;
+  assignedToLastName?: string;
+  rootCauseTypeName?: string;
+  resolutionTime?: string;
 }
 
 interface IncidentCardProps {
@@ -24,6 +29,7 @@ export const IncidentCard: React.FC<IncidentCardProps> = ({ incident }) => {
   const getStatusClass = (status: string) => {
     const s = status.toLowerCase();
     if (s === 'open' || s === 'abierto') return 'opscore-status-open';
+    if (s === 'assigned' || s === 'asignado') return 'opscore-status-assigned';
     if (s === 'in progress' || s === 'in-progress' || s === 'en proceso' || s === 'en-proceso') return 'opscore-status-in-progress';
     return 'opscore-status-closed';
   };

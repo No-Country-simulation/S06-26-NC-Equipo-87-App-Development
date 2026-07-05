@@ -11,6 +11,8 @@
   --colors-text-on-dark: #E8E6DF;
   --colors-status-open: #E24B4A;
   --colors-status-open-badge-text: #791F1F;
+  --colors-status-assigned: #4A90E2;
+  --colors-status-assigned-badge-text: #1C3B68;
   --colors-status-in-progress: #BA7517;
   --colors-status-in-progress-badge-text: #633806;
   --colors-status-closed: #1D9E75;
@@ -20,6 +22,14 @@
   --rounded-md: 8px;
   --rounded-lg: 16px;
   --rounded-full: 9999px;
+
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 24px;
+  --spacing-6: 32px;
+  --spacing-gutter: 16px;
 
   --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;

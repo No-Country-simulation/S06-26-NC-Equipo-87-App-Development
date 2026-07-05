@@ -39,6 +39,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
                   .WithMany()
                   .HasForeignKey(u => u.SpecialityId)
                   .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(u => u.ExpoPushToken).HasMaxLength(256);
         });
 
         builder.Entity<UserArea>(entity =>

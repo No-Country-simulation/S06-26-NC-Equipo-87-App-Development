@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { postRequest, ApiError } from '../../../shared/api/apiClient';
 import { saveToken, getToken, deleteToken } from '../../../shared/auth/tokenService';
 import { decodeJwt } from '../../../shared/auth/jwtDecoder';
+import { registerForPushNotificationsAsync, unregisterPushNotificationsAsync } from '../../../shared/notifications/pushNotificationHelper';
 
 export interface UserClaims {
   sub?: string;
@@ -52,6 +53,11 @@ export const useAuthStore = create<AuthState>((set) => ({
       await saveToken(tokenVal);
       const decoded = decodeJwt(tokenVal) as UserClaims | null;
       set({ token: tokenVal, user: decoded, loading: false });
+      
+      registerForPushNotificationsAsync().catch((err) =>
+        console.error('Failed to register push token after login:', err)
+      );
+
       return tokenVal;
     } catch (err: unknown) {
       const apiErr = err as ApiError;
@@ -70,6 +76,11 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     set({ loading: true });
+    try {
+      await unregisterPushNotificationsAsync();
+    } catch {
+      // Ignored for logout resilience
+    }
     try {
       await postRequest('/api/authentication/logout', {});
     } catch {
@@ -93,6 +104,11 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
       const decoded = decodeJwt(cachedToken) as UserClaims | null;
       set({ token: cachedToken, user: decoded, loading: false });
+
+      registerForPushNotificationsAsync().catch((err) =>
+        console.error('Failed to refresh push token during verifySession:', err)
+      );
+
       return cachedToken;
     } catch {
       await deleteToken();

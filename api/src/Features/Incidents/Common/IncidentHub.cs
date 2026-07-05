@@ -20,25 +20,26 @@ public class IncidentHub(ILogger<IncidentHub> logger) : Hub
         {
             _logger.LogInformation("SignalR client connected. UserId: {UserId}, Authenticated: {IsAuthenticated}", userId, user.Identity?.IsAuthenticated);
 
-            if (user.IsInRole("Operator"))
+            if (user.IsInRole("Operator") || user.HasClaim(c => c.Type == "role" && c.Value == "Operator"))
             {
                 await Groups.AddToGroupAsync(Context.ConnectionId, $"operator_{userId}");
                 _logger.LogInformation("UserId {UserId} joined group: operator_{UserId}", userId, userId);
             }
-            if (user.IsInRole("Supervisor"))
+            if (user.IsInRole("Supervisor") || user.HasClaim(c => c.Type == "role" && c.Value == "Supervisor"))
             {
                 await Groups.AddToGroupAsync(Context.ConnectionId, $"supervisor_{userId}");
                 _logger.LogInformation("UserId {UserId} joined group: supervisor_{UserId}", userId, userId);
             }
-            if (user.IsInRole("Technician"))
+            if (user.IsInRole("Technician") || user.HasClaim(c => c.Type == "role" && c.Value == "Technician"))
             {
                 await Groups.AddToGroupAsync(Context.ConnectionId, $"tech_{userId}");
                 _logger.LogInformation("UserId {UserId} joined group: tech_{UserId}", userId, userId);
             }
-            if (user.IsInRole("Plant Manager") || user.IsInRole("Manager"))
+            if (user.IsInRole("Plant Manager") || user.IsInRole("Manager") || user.HasClaim(c => c.Type == "role" && (c.Value == "Plant Manager" || c.Value == "Manager")))
             {
+                await Groups.AddToGroupAsync(Context.ConnectionId, "managers");
                 await Groups.AddToGroupAsync(Context.ConnectionId, $"manager_{userId}");
-                _logger.LogInformation("UserId {UserId} joined group: manager_{UserId}", userId, userId);
+                _logger.LogInformation("UserId {UserId} joined group: managers and manager_{UserId}", userId, userId);
             }
         }
         else

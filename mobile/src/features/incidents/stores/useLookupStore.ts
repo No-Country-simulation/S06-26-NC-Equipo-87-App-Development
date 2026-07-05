@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { act } from 'react';
 import { getRequest } from '../../../shared/api/apiClient';
 
 export interface LookupItem {
@@ -18,7 +19,10 @@ interface LookupState {
   fetchRootCauses: () => Promise<void>;
 }
 
-export const useLookupStore = create<LookupState>((set) => ({
+let activeLookupsPromise: Promise<[LookupItem[], LookupItem[], LookupItem[]]> | null = null;
+let rootCausesPromise: Promise<LookupItem[]> | null = null;
+
+export const useLookupStore = create<LookupState>((set, get) => ({
   areas: [],
   types: [],
   severities: [],
@@ -27,13 +31,26 @@ export const useLookupStore = create<LookupState>((set) => ({
   error: null,
 
   fetchActiveLookups: async () => {
+    const { areas, types, severities } = get();
+    if (areas.length > 0 && types.length > 0 && severities.length > 0) {
+      return;
+    }
+
     set({ loading: true, error: null });
+
     try {
-      const [fetchedAreas, fetchedTypes, fetchedSeverities] = await Promise.all([
-        getRequest<LookupItem[]>('/api/areas'),
-        getRequest<LookupItem[]>('/api/incidents/types'),
-        getRequest<LookupItem[]>('/api/incidents/severities'),
-      ]);
+      if (!activeLookupsPromise) {
+        activeLookupsPromise = Promise.all([
+          getRequest<LookupItem[]>('/api/areas'),
+          getRequest<LookupItem[]>('/api/incidents/types'),
+          getRequest<LookupItem[]>('/api/incidents/severities'),
+        ]).catch((err) => {
+          activeLookupsPromise = null;
+          throw err;
+        });
+      }
+
+      const [fetchedAreas, fetchedTypes, fetchedSeverities] = await activeLookupsPromise;
 
       set({
         areas: fetchedAreas,
@@ -51,9 +68,23 @@ export const useLookupStore = create<LookupState>((set) => ({
   },
 
   fetchRootCauses: async () => {
+    const { rootCauses } = get();
+    if (rootCauses.length > 0) {
+      return;
+    }
+
     set({ loading: true, error: null });
+
     try {
-      const causeData = await getRequest<LookupItem[]>('/api/incidents/root-cause-types');
+      if (!rootCausesPromise) {
+        rootCausesPromise = getRequest<LookupItem[]>('/api/incidents/root-cause-types')
+          .catch((err) => {
+            rootCausesPromise = null;
+            throw err;
+          });
+      }
+
+      const causeData = await rootCausesPromise;
       set({ rootCauses: causeData, loading: false });
     } catch (err: unknown) {
       set({
@@ -64,3 +95,29 @@ export const useLookupStore = create<LookupState>((set) => ({
     }
   },
 }));
+
+if (typeof afterEach === 'function') {
+  afterEach(() => {
+    activeLookupsPromise = null;
+    rootCausesPromise = null;
+    const reset = () => {
+      useLookupStore.setState({
+        areas: [],
+        types: [],
+        severities: [],
+        rootCauses: [],
+        loading: false,
+        error: null,
+      });
+    };
+    if (typeof act === 'function') {
+      try {
+        act(reset);
+      } catch {
+        reset();
+      }
+    } else {
+      reset();
+    }
+  });
+}

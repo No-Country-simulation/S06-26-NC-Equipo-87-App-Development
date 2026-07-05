@@ -89,8 +89,7 @@ export const OperatorDashboardScreen: React.FC<OperatorDashboardScreenProps> = (
         setUserRole(roleValue);
       }
 
-      const sinceDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      await fetchOperatorIncidents(userId, sinceDate);
+      await fetchOperatorIncidents(userId);
     } catch (err: unknown) {
       setError((err as Error)?.message || 'Error al conectar con el servidor.');
     } finally {
