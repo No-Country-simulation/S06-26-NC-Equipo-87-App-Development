@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { MetricCard } from '../molecules/MetricCard';
 import { StatusSummary } from '../organisms/StatusSummary';
@@ -30,5 +30,39 @@ describe('Dashboard Components', () => {
   it('renders AlertBanner correctly', () => {
     render(<AlertBanner insights={['1 incidente sin clasificar esta semana, requiere revisión manual.']} />);
     expect(screen.getByText(/requiere revisión manual/)).toBeInTheDocument();
+  });
+
+  it('dismisses alerts and maintains dismissed state on identical re-renders and unmounts', () => {
+    // Arrange
+    localStorage.clear();
+    const firstAlert = '1 incidente sin clasificar esta semana';
+    const secondAlert = '2 incidentes con retraso';
+    const { rerender, unmount } = render(<AlertBanner insights={[firstAlert, secondAlert]} />);
+
+    // Act
+    expect(screen.getByText(firstAlert)).toBeInTheDocument();
+    expect(screen.getByText(secondAlert)).toBeInTheDocument();
+    
+    const dismissButtons = screen.getAllByRole('button', { name: /dismiss alert/i });
+    fireEvent.click(dismissButtons[0]);
+
+    // Assert
+    expect(screen.queryByText(firstAlert)).not.toBeInTheDocument();
+    expect(screen.getByText(secondAlert)).toBeInTheDocument();
+
+    // Act
+    rerender(<AlertBanner insights={[firstAlert, secondAlert]} />);
+
+    // Assert
+    expect(screen.queryByText(firstAlert)).not.toBeInTheDocument();
+    expect(screen.getByText(secondAlert)).toBeInTheDocument();
+
+    // Act
+    unmount();
+    render(<AlertBanner insights={[firstAlert, secondAlert]} />);
+
+    // Assert
+    expect(screen.queryByText(firstAlert)).not.toBeInTheDocument();
+    expect(screen.getByText(secondAlert)).toBeInTheDocument();
   });
 });
