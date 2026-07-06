@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Sidebar } from './Sidebar';
+import { LogoutConfirmModal } from '../molecules/LogoutConfirmModal';
 
 interface AppLayoutProps {
   user: Record<string, unknown> | null;
@@ -9,6 +10,20 @@ interface AppLayoutProps {
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ user, onLogout, children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+
+  const handleLogoutClick = () => {
+    setIsLogoutModalOpen(true);
+  };
+
+  const handleConfirmLogout = () => {
+    setIsLogoutModalOpen(false);
+    onLogout();
+  };
+
+  const handleCancelLogout = () => {
+    setIsLogoutModalOpen(false);
+  };
 
   return (
     <div className="opscore-dashboard-layout">
@@ -32,12 +47,19 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ user, onLogout, children }
 
       <div className={`opscore-sidebar-wrapper ${isSidebarOpen ? 'open' : ''}`}>
         <div className="opscore-sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />
-        <Sidebar user={user} onLogout={onLogout} onClose={() => setIsSidebarOpen(false)} />
+        <Sidebar user={user} onLogout={handleLogoutClick} onClose={() => setIsSidebarOpen(false)} />
       </div>
 
       <main className="opscore-main-content">
         {children}
       </main>
+
+      {isLogoutModalOpen && (
+        <LogoutConfirmModal
+          onConfirm={handleConfirmLogout}
+          onCancel={handleCancelLogout}
+        />
+      )}
     </div>
   );
 };

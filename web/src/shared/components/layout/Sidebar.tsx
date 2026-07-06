@@ -31,14 +31,31 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, onClose }) => 
 
   const getUserRoleLabel = (): string => {
     const role = user?.['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || user?.role;
-    return typeof role === 'string' ? role.toUpperCase() : '';
+    if (typeof role !== 'string') {
+      return '';
+    }
+    const roleKey = role.toLowerCase();
+    if (roleKey === 'plant manager') {
+      return 'GERENTE DE PLANTA';
+    }
+    if (roleKey === 'supervisor') {
+      return 'SUPERVISOR';
+    }
+    if (roleKey === 'technician') {
+      return 'TÉCNICO';
+    }
+    if (roleKey === 'operator') {
+      return 'OPERADOR';
+    }
+    return role.toUpperCase();
   };
 
   const isDashboardActive = hash === '#dashboard-operational';
   const isCausaRaizActive = hash === '#dashboard-analytical';
   const isTicketsActive = !isDashboardActive && !isCausaRaizActive;
 
-  const userRole = getUserRoleLabel().toLowerCase();
+  const rawRole = user?.['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || user?.role;
+  const userRole = typeof rawRole === 'string' ? rawRole.toLowerCase() : '';
   const canAccessDashboard = userRole === 'plant manager' || userRole === 'supervisor';
   const canAccessCausaRaiz = userRole === 'plant manager';
 

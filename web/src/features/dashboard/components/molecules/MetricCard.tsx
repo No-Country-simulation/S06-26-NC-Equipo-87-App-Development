@@ -7,7 +7,6 @@ export interface MetricCardProps {
   trendText: string;
   trendDirection: 'up' | 'down';
   trendColor: 'green' | 'red';
-  icon?: React.ReactNode;
 }
 
 export const MetricCard: React.FC<MetricCardProps> = ({
@@ -16,7 +15,6 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   trendText,
   trendDirection,
   trendColor,
-  icon
 }) => {
   const tColor = trendColor === 'green' ? 'var(--colors-status-closed)' : 'var(--colors-status-open)';
   const arrow = trendDirection === 'up' ? '↑' : '↓';
@@ -47,17 +45,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           </Typography>
         </div>
       </div>
-      {icon && (
-        <div style={{
-          position: 'absolute',
-          top: 'var(--spacing-4)',
-          right: 'var(--spacing-4)',
-          color: 'var(--colors-text-tertiary)',
-          opacity: 0.6
-        }}>
-          {icon}
-        </div>
-      )}
     </div>
   );
 };
+
