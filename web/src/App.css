@@ -1178,3 +1178,110 @@
   }
 }
 
+.opscore-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(27, 30, 34, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  opacity: 0;
+  animation: opscore-fade-in 0.2s ease forwards;
+}
+
+.opscore-modal-card {
+  background-color: #F5F4EE;
+  border-radius: 24px;
+  width: 90%;
+  max-width: 440px;
+  padding: 40px 32px 32px 32px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  text-align: center;
+  transform: translateY(20px);
+  animation: opscore-slide-up 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.opscore-modal-title {
+  font-family: var(--font-sans);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--colors-text-primary);
+  margin-bottom: 16px;
+}
+
+.opscore-modal-message {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--colors-text-secondary);
+  margin-bottom: 32px;
+}
+
+.opscore-modal-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  width: 100%;
+}
+
+.opscore-modal-btn {
+  flex: 1;
+  height: 48px;
+  border-radius: 12px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+
+.opscore-modal-btn-cancel {
+  background-color: #ffffff;
+  color: var(--colors-text-primary);
+  border: 1.25px solid #E2E1DA;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.opscore-modal-btn-cancel:hover {
+  background-color: #fcfbfa;
+  border-color: #cccbca;
+}
+
+.opscore-modal-btn-confirm {
+  background-color: var(--colors-background-dark);
+  color: #ffffff;
+}
+
+.opscore-modal-btn-confirm:hover {
+  background-color: #2E3238;
+}
+
+@keyframes opscore-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes opscore-slide-up {
+  from {
+    transform: translateY(20px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+
