@@ -484,18 +484,30 @@
   background-color: var(--colors-background-primary);
 }
 
-.opscore-sidebar {
+.opscore-sidebar-wrapper {
   width: 250px;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  flex-shrink: 0;
+}
+
+.opscore-sidebar {
+  width: 100%;
+  height: 100%;
   background-color: var(--colors-background-dark);
   color: var(--colors-text-on-dark);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 32px 24px;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  flex-shrink: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.opscore-sidebar::-webkit-scrollbar {
+  display: none;
 }
 
 .opscore-sidebar-top {
