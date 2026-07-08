@@ -3,7 +3,6 @@ import { Logo } from '../molecules/Logo';
 import { BarChartIcon } from '../atoms/BarChartIcon';
 import { ScatterChartIcon } from '../atoms/ScatterChartIcon';
 import { ClipboardIcon } from '../atoms/ClipboardIcon';
-import { useWebIncidentStore } from '../../../features/incidents/stores/useWebIncidentStore';
 
 interface SidebarProps {
   user: Record<string, unknown> | null;
@@ -12,7 +11,6 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, onClose }) => {
-  const { openCount } = useWebIncidentStore();
   const [hash, setHash] = useState(window.location.hash);
 
   useEffect(() => {
@@ -102,28 +100,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, onClose }) => 
           <a
             href="#tickets"
             className={`opscore-sidebar-nav-item ${isTicketsActive ? 'active' : ''}`}
-            style={{ textDecoration: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', boxSizing: 'border-box' }}
+            style={{ textDecoration: 'none' }}
             onClick={onClose}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <ClipboardIcon className="opscore-nav-icon" size={18} />
-              <span>Tickets</span>
-            </div>
-            {openCount > 0 && (
-              <span style={{
-                backgroundColor: 'var(--colors-status-open, #ef4444)',
-                color: '#fff',
-                borderRadius: '12px',
-                padding: '2px 6px',
-                fontSize: '11px',
-                fontWeight: 'bold',
-                lineHeight: 1,
-                minWidth: '16px',
-                textAlign: 'center'
-              }}>
-                {openCount}
-              </span>
-            )}
+            <ClipboardIcon className="opscore-nav-icon" size={18} />
+            <span>Tickets</span>
           </a>
         </nav>
       </div>
