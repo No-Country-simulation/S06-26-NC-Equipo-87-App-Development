@@ -2,12 +2,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { AppLayout } from './AppLayout';
 import { expect, test, vi, beforeEach } from 'vitest';
 
-vi.mock('../../../features/incidents/stores/useWebIncidentStore', () => ({
-  useWebIncidentStore: () => ({
-    openCount: 3,
-  }),
-}));
-
 beforeEach(() => {
   vi.restoreAllMocks();
 });

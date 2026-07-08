@@ -1118,17 +1118,20 @@
     color: #000000 !important;
     zoom: 80%;
   }
-  .opscore-dashboard-layout,
+  .opscore-dashboard-layout {
+    background: #ffffff !important;
+    color: #000000 !important;
+    display: block !important;
+  }
   .opscore-main-content {
     background: #ffffff !important;
     color: #000000 !important;
-  }
-  .opscore-sidebar {
-    display: none !important;
-  }
-  .opscore-main-content {
     padding: 0 !important;
     width: 100% !important;
+  }
+  .opscore-sidebar-wrapper,
+  .opscore-mobile-header {
+    display: none !important;
   }
   button {
     display: none !important;
