@@ -31,6 +31,28 @@ vi.mock('./features/incidents/stores/useWebIncidentStore', () => ({
   }),
 }));
 
+vi.mock('./features/dashboard/stores/useWebDashboardStore', () => ({
+  useWebDashboardStore: () => ({
+    data: null,
+    timeFilter: 'current',
+    setTimeFilter: vi.fn(),
+    loadDashboardData: vi.fn(),
+  }),
+}));
+
+vi.mock('./features/causa-raiz/stores/useWebCausaRaizStore', () => ({
+  useWebCausaRaizStore: () => ({
+    data: null,
+    timeFilter: 'current',
+    areaFilter: 'All',
+    availableAreas: [],
+    setTimeFilter: vi.fn(),
+    setAreaFilter: vi.fn(),
+    loadAreas: vi.fn(),
+    loadAnalyticalData: vi.fn(),
+  }),
+}));
+
 beforeEach(() => {
   window.location.hash = '';
   vi.restoreAllMocks();
@@ -123,6 +145,69 @@ test('plant manager role sees all links and has access to all pages without redi
   expect(window.location.hash).toBe('#dashboard-analytical');
   expect(screen.getByText('Dashboard')).toBeInTheDocument();
   expect(screen.getByText('Tickets')).toBeInTheDocument();
+
+  unmount();
+});
+
+test('operator role entering with empty hash is redirected to tickets', async () => {
+  useWebAuthStore.setState({
+    initializing: false,
+    token: 'mock-operator-token',
+    user: {
+      role: 'Operator',
+      firstName: 'Ana',
+      lastName: 'Rosas',
+    },
+  });
+
+  window.location.hash = '';
+  const { unmount } = render(<App />);
+
+  await waitFor(() => {
+    expect(window.location.hash).toBe('#tickets');
+  });
+
+  unmount();
+});
+
+test('supervisor role entering with empty hash is redirected to dashboard-operational', async () => {
+  useWebAuthStore.setState({
+    initializing: false,
+    token: 'mock-supervisor-token',
+    user: {
+      role: 'Supervisor',
+      firstName: 'Santiago',
+      lastName: 'Mendoza',
+    },
+  });
+
+  window.location.hash = '';
+  const { unmount } = render(<App />);
+
+  await waitFor(() => {
+    expect(window.location.hash).toBe('#dashboard-operational');
+  });
+
+  unmount();
+});
+
+test('plant manager role entering with empty hash is redirected to dashboard-operational', async () => {
+  useWebAuthStore.setState({
+    initializing: false,
+    token: 'mock-manager-token',
+    user: {
+      role: 'Plant Manager',
+      firstName: 'Roberto',
+      lastName: 'Vazquez',
+    },
+  });
+
+  window.location.hash = '';
+  const { unmount } = render(<App />);
+
+  await waitFor(() => {
+    expect(window.location.hash).toBe('#dashboard-operational');
+  });
 
   unmount();
 });

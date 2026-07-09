@@ -25,16 +25,27 @@ function App() {
     const role = (user['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || user.role || '') as string;
     const userRole = role.toLowerCase();
 
-    if (hash === '#dashboard-analytical') {
-      if (userRole !== 'plant manager') {
-        if (userRole === 'supervisor') {
+    const isDashboardAnalyticalAccessible = userRole === 'plant manager';
+    const isDashboardOperationalAccessible = userRole === 'plant manager' || userRole === 'supervisor';
+
+    if (!hash || hash === '#') {
+      if (isDashboardOperationalAccessible) {
+        window.location.hash = '#dashboard-operational';
+      } else if (isDashboardAnalyticalAccessible) {
+        window.location.hash = '#dashboard-analytical';
+      } else {
+        window.location.hash = '#tickets';
+      }
+    } else if (hash === '#dashboard-analytical') {
+      if (!isDashboardAnalyticalAccessible) {
+        if (isDashboardOperationalAccessible) {
           window.location.hash = '#dashboard-operational';
         } else {
           window.location.hash = '#tickets';
         }
       }
     } else if (hash === '#dashboard-operational') {
-      if (userRole !== 'plant manager' && userRole !== 'supervisor') {
+      if (!isDashboardOperationalAccessible) {
         window.location.hash = '#tickets';
       }
     }

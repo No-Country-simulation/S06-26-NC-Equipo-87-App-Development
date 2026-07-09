@@ -18,7 +18,7 @@ export const StatusSummaryItem: React.FC<StatusSummaryItemProps> = ({
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
       <StatusDot color={dotColor} />
-      <Typography variant="label" style={{ color: textColor, fontWeight: 500 }}>
+      <Typography variant="label" style={{ color: textColor, fontWeight: 400 }}>
         {count} {label}
       </Typography>
     </div>
