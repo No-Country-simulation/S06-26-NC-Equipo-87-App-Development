@@ -31,6 +31,28 @@ vi.mock('./features/incidents/stores/useWebIncidentStore', () => ({
   }),
 }));
 
+vi.mock('./features/dashboard/stores/useWebDashboardStore', () => ({
+  useWebDashboardStore: () => ({
+    data: null,
+    timeFilter: 'current',
+    setTimeFilter: vi.fn(),
+    loadDashboardData: vi.fn(),
+  }),
+}));
+
+vi.mock('./features/causa-raiz/stores/useWebCausaRaizStore', () => ({
+  useWebCausaRaizStore: () => ({
+    data: null,
+    timeFilter: 'current',
+    areaFilter: 'All',
+    availableAreas: [],
+    setTimeFilter: vi.fn(),
+    setAreaFilter: vi.fn(),
+    loadAreas: vi.fn(),
+    loadAnalyticalData: vi.fn(),
+  }),
+}));
+
 beforeEach(() => {
   window.location.hash = '';
   vi.restoreAllMocks();
