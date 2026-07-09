@@ -27,9 +27,9 @@ export const TechnicianPerformanceTable: React.FC<TechnicianPerformanceTableProp
           <tbody>
             {data.map((tech, index) => (
               <tr key={index}>
-                <td style={{ textAlign: 'left', fontWeight: 500 }}>{tech.name}</td>
+                <td style={{ textAlign: 'left', fontWeight: 400 }}>{tech.name}</td>
                 <td style={{ textAlign: 'left', color: 'var(--colors-text-secondary)' }}>{tech.specialty}</td>
-                <td style={{ textAlign: 'right', fontWeight: 600 }}>{tech.ticketsResolved}</td>
+                <td style={{ textAlign: 'right', fontWeight: 400 }}>{tech.ticketsResolved}</td>
                 <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', color: 'var(--colors-text-secondary)' }}>
                   {tech.avgResolutionTime}
                 </td>

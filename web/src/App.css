@@ -707,7 +707,7 @@
   align-items: center;
   gap: 12px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .opscore-metric-total {
@@ -745,7 +745,7 @@
   border-radius: 9999px;
   padding: 10px 24px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--colors-text-secondary);
   cursor: pointer;
   outline: none;
@@ -794,7 +794,7 @@
 .opscore-table th {
   padding: 16px 24px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--colors-text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -825,7 +825,7 @@
 
 .opscore-row-id {
   font-family: var(--font-mono);
-  font-weight: 600;
+  font-weight: 400;
   font-size: 14px;
   color: var(--colors-text-primary);
 }
@@ -843,7 +843,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .opscore-severity-dot {
@@ -873,7 +873,7 @@
   padding: 6px 14px;
   border-radius: 9999px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 400;
   width: 102px;
 }
 

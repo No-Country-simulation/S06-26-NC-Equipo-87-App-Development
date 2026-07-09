@@ -35,12 +35,12 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           {value}
         </Typography>
         <div style={{ marginTop: 'var(--spacing-2)' }}>
-          <Typography variant="label" style={{ color: 'var(--colors-text-tertiary)', fontSize: '13px' }}>
+          <Typography variant="label" style={{ color: 'var(--colors-text-tertiary)', fontSize: '13px', fontWeight: 400 }}>
             {title}
           </Typography>
         </div>
         <div style={{ marginTop: 'var(--spacing-2)' }}>
-          <Typography variant="caption" style={{ color: tColor, fontWeight: 500, fontSize: '12px' }}>
+          <Typography variant="caption" style={{ color: tColor, fontWeight: 400, fontSize: '12px' }}>
             {arrow} {trendText}
           </Typography>
         </div>
