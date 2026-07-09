@@ -126,3 +126,66 @@ test('plant manager role sees all links and has access to all pages without redi
 
   unmount();
 });
+
+test('operator role entering with empty hash is redirected to tickets', async () => {
+  useWebAuthStore.setState({
+    initializing: false,
+    token: 'mock-operator-token',
+    user: {
+      role: 'Operator',
+      firstName: 'Ana',
+      lastName: 'Rosas',
+    },
+  });
+
+  window.location.hash = '';
+  const { unmount } = render(<App />);
+
+  await waitFor(() => {
+    expect(window.location.hash).toBe('#tickets');
+  });
+
+  unmount();
+});
+
+test('supervisor role entering with empty hash is redirected to dashboard-operational', async () => {
+  useWebAuthStore.setState({
+    initializing: false,
+    token: 'mock-supervisor-token',
+    user: {
+      role: 'Supervisor',
+      firstName: 'Santiago',
+      lastName: 'Mendoza',
+    },
+  });
+
+  window.location.hash = '';
+  const { unmount } = render(<App />);
+
+  await waitFor(() => {
+    expect(window.location.hash).toBe('#dashboard-operational');
+  });
+
+  unmount();
+});
+
+test('plant manager role entering with empty hash is redirected to dashboard-operational', async () => {
+  useWebAuthStore.setState({
+    initializing: false,
+    token: 'mock-manager-token',
+    user: {
+      role: 'Plant Manager',
+      firstName: 'Roberto',
+      lastName: 'Vazquez',
+    },
+  });
+
+  window.location.hash = '';
+  const { unmount } = render(<App />);
+
+  await waitFor(() => {
+    expect(window.location.hash).toBe('#dashboard-operational');
+  });
+
+  unmount();
+});

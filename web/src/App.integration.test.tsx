@@ -9,7 +9,7 @@ const MOCK_TOKEN_PAYLOAD = createBase64Url({
   unique_name: 'santiagomendoza',
   firstName: 'Santiago',
   lastName: 'Mendoza',
-  role: 'Supervisor',
+  role: 'Operator',
   areaName: 'Linea 3'
 });
 const MOCK_TOKEN_SIGNATURE = 'sig';
@@ -88,6 +88,6 @@ test('successful login and incident loading flow', async () => {
   });
 
   expect(screen.getByText('Santiago Mendoza')).toBeInTheDocument();
-  expect(screen.getByText('SUPERVISOR')).toBeInTheDocument();
+  expect(screen.getByText('OPERADOR', { selector: '.opscore-user-role' })).toBeInTheDocument();
   expect(screen.getByText('Falla mecanica en motor principal')).toBeInTheDocument();
 });
