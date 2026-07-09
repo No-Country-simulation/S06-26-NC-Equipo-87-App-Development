@@ -482,6 +482,7 @@
   display: flex;
   min-height: 100vh;
   background-color: var(--colors-background-primary);
+  background-image: linear-gradient(to right, var(--colors-background-dark) 250px, var(--colors-background-primary) 250px);
 }
 
 .opscore-sidebar-wrapper {
@@ -1007,6 +1008,7 @@
 
   .opscore-dashboard-layout {
     flex-direction: column;
+    background-image: none;
   }
 
   .opscore-sidebar-wrapper {
