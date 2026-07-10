@@ -28,7 +28,7 @@ export const TechnicianDashboardScreen: React.FC<TechnicianDashboardScreenProps>
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string>('Técnico Ramírez');
+  const [userName, setUserName] = useState<string>('Técnico');
   const [userRole, setUserRole] = useState<string>('Técnico');
   const [menuVisible, setMenuVisible] = useState<boolean>(false);
   const [startedTicketIds, setStartedTicketIds] = useState<string[]>([]);
@@ -91,7 +91,7 @@ export const TechnicianDashboardScreen: React.FC<TechnicianDashboardScreenProps>
         const rawLastName = user.lastName || '';
         if (rawFirstName) {
           const lastNameInitial = rawLastName ? ` ${rawLastName.charAt(0)}.` : '';
-          setUserName(`Técnico ${rawFirstName}${lastNameInitial}`);
+          setUserName(`${rawFirstName}${lastNameInitial}`);
         }
         const roleClaim = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
         const roleValue = (user[roleClaim] as string) || user.role;
