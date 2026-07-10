@@ -11,6 +11,26 @@ interface ProfileMenuProps {
   onClose: () => void;
 }
 
+const mapRoleToSpanish = (role: string): string => {
+  if (!role) {
+    return '';
+  }
+  const normalizedRole = role.toLowerCase().trim();
+  if (normalizedRole === 'technician') {
+    return 'Técnico';
+  }
+  if (normalizedRole === 'operator') {
+    return 'Operador';
+  }
+  if (normalizedRole === 'plant manager' || normalizedRole === 'plantmanager') {
+    return 'Gerente de Planta';
+  }
+  if (normalizedRole === 'supervisor') {
+    return 'Supervisor';
+  }
+  return role;
+};
+
 export const ProfileMenu: React.FC<ProfileMenuProps> = ({
   userName,
   userRole,
@@ -26,7 +46,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
             {userName}
           </Typography>
           <Typography variant="caption" color={designTokens.colors['text-secondary']} style={styles.roleText}> 
-            {userRole}
+            {mapRoleToSpanish(userRole)}
           </Typography>
         </View>
         <View style={styles.divider} />
